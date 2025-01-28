@@ -3,11 +3,14 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { useRouter } from 'next/navigation';
 
 export default function UploadButton() {
     const [file, setFile] = useState<File | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    const router = useRouter();
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -35,7 +38,7 @@ export default function UploadButton() {
 
             if (response.ok) {
                 const result = await response.json();
-                setMessage(`File uploaded successfully: ${result.file}`);
+                router.push("/view-analysis")
             } else {
                 const error = await response.json();
                 setMessage(`Error: ${error.message}`);
