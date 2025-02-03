@@ -1,8 +1,6 @@
-import Image from "next/image";
 import SideNav from "@/app/ui/side-nav";
 import Header from "@/app/ui/header";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload } from "@fortawesome/free-solid-svg-icons";
+
 import React from "react";
 import UploadButton from "@/app/ui/upload-button";
 
