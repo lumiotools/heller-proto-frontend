@@ -101,7 +101,7 @@ export default function CADUploadButton(): JSX.Element {
             className="hidden"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Supported formats: STEP (.step, .stp), DXF (.dxf), ZIP (.zip)
+            Supported formats: STEP (.step, .stp), FreeCAD ZIP (.zip)
           </p>
           {file && (
             <div className="mt-2">
