@@ -1,19 +1,10 @@
-import SideNav from "@/app/ui/side-nav";
-import Header from "@/app/ui/header";
-
 import React from "react";
 import UploadButton from "@/app/ui/upload-button";
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-screen">
-      <Header />
-      <div className="flex flex-1">
-        <SideNav />
-        <div className="flex flex-col items-center justify-center w-full bg-gray-100 p-6">
-          <UploadButton />
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center w-full bg-gray-100 p-6 h-full">
+      <UploadButton />
     </div>
   );
 }
