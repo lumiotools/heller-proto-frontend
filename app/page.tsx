@@ -11,7 +11,6 @@ export default function Home() {
       <div className="flex flex-1">
         <SideNav />
         <div className="flex flex-col items-center justify-center w-full bg-gray-100 p-6">
-          <h2 className="text-2xl font-bold mb-4">Or...</h2>
           <UploadButton />
         </div>
       </div>
