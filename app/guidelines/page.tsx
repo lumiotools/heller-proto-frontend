@@ -1,127 +1,271 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileCheck, AlertTriangle, Info } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
-type Priority = "critical" | "high" | "medium";
-type GuidelineType = "documentation" | "technical" | "analysis" | "logistics";
-
-interface Guideline {
+interface ValidationItem {
+  id: string;
   title: string;
-  content: string;
-  priority: Priority;
-  type: GuidelineType;
+  status: "pending" | "pass" | "fail";
+  details?: string;
+  subItems?: ValidationItem[];
 }
 
-export default function Guidelines() {
-  const guidelines: Guideline[] = [
-    {
-      title: "Drawing Documentation",
-      content:
-        "Ensure proper finish callouts on all detail drawings. Verify there are no open ends in the design. All drawings must include proper dimensions and tolerances.",
-      priority: "high",
-      type: "documentation",
-    },
-    {
-      title: "Material Selection Requirements",
-      content:
-        "Use aluminized steel in heated regions where temperature exceeds 200°F. Every component must have material clearly assigned in the design documentation. Include material properties and heat treatment specifications where applicable.",
-      priority: "high",
-      type: "technical",
-    },
-    {
-      title: "Structural Analysis Requirements",
-      content:
-        "All structural members must be reviewed for stress and deflection limits. FEA analysis required for critical components. Maximum allowable stress: 60% of yield strength. Maximum deflection: L/240 for spans over 24 inches.",
-      priority: "critical",
-      type: "analysis",
-    },
-    {
-      title: "Manufacturing Instructions",
-      content:
-        'Drawings must be marked with either "make from" or "similar to" references to expedite vendor processing. Include detailed manufacturing notes and special process requirements. All critical dimensions must be highlighted.',
-      priority: "medium",
-      type: "documentation",
-    },
-    {
-      title: "Shipping and Environmental Considerations",
-      content:
-        "Design must account for shipping conditions including temperature (-20°F to 120°F), humidity (0-100%), and vibration. Package design must protect against typical shipping impacts. Include handling instructions for temperature-sensitive components.",
-      priority: "medium",
-      type: "logistics",
-    },
-    {
-      title: "Size and Modularity Constraints",
-      content:
-        "Product dimensions must not exceed: 24-inch usable region for 30-inch modules, 28-inch for 34-inch modules, and 30-inch for 36-inch modules. Allow for thermal expansion in sizing calculations.",
-      priority: "high",
-      type: "technical",
-    },
-  ];
+interface ComponentData {
+  id: string;
+  name: string;
+  material?: string;
+  thermalConductivity?: number;
+  thermalExpansion?: number;
+  meltingPoint?: number;
+  thickness?: number;
+}
 
-  const getPriorityIcon = (priority: Priority) => {
-    switch (priority) {
-      case "critical":
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
-      case "high":
-        return <Info className="h-5 w-5 text-yellow-500" />;
+export default function ValidationChecklist() {
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+
+  const toggleSection = (id: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pass":
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+      case "fail":
+        return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <FileCheck className="h-5 w-5 text-green-500" />;
+        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
     }
   };
 
-  const getPriorityColor = (priority: Priority): string => {
-    switch (priority) {
-      case "critical":
-        return "border-l-4 border-red-500";
-      case "high":
-        return "border-l-4 border-yellow-500";
-      default:
-        return "border-l-4 border-green-500";
-    }
+  const components: ComponentData[] = [
+    {
+      id: "comp1",
+      name: "Base Plate",
+      material: "Aluminum 6061",
+      thermalConductivity: 167,
+      thermalExpansion: 23.6,
+      meltingPoint: 652,
+      thickness: 3.2,
+    },
+    // Add more components as needed
+  ];
+
+  const validationChecks: ValidationItem[] = [
+    {
+      id: "geometry",
+      title: "1. Geometry Integrity Check",
+      status: "pending",
+      subItems: [
+        {
+          id: "components",
+          title: "Component List",
+          status: "pass",
+          details: `${components.length} components found`,
+        },
+        {
+          id: "solid-validation",
+          title: "Solid Validation",
+          status: "pending",
+          subItems: [
+            {
+              id: "open-edges",
+              title: "Open Edges/Gaps Check",
+              status: "pending",
+            },
+            {
+              id: "overlapping",
+              title: "Overlapping Bodies Check",
+              status: "pending",
+            },
+            {
+              id: "zero-thickness",
+              title: "Zero-thickness Geometry Check",
+              status: "pending",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "structural",
+      title: "2. Structural Analysis and Material Validation",
+      status: "pending",
+      subItems: [
+        {
+          id: "material-check",
+          title: "Aluminum Material Validation",
+          status: "pending",
+        },
+        {
+          id: "thermal-props",
+          title: "Thermal Properties",
+          status: "pending",
+          subItems: [
+            {
+              id: "conductivity",
+              title: "Thermal Conductivity",
+              status: "pending",
+            },
+            {
+              id: "expansion",
+              title: "Thermal Expansion Coefficient",
+              status: "pending",
+            },
+            {
+              id: "melting",
+              title: "Melting Point",
+              status: "pending",
+            },
+          ],
+        },
+        {
+          id: "structural-checks",
+          title: "Structural Checks",
+          status: "pending",
+          subItems: [
+            {
+              id: "thickness",
+              title: "Thickness Validation (>2mm)",
+              status: "pending",
+            },
+            {
+              id: "material-assignment",
+              title: "Material Assignment Check",
+              status: "pending",
+            },
+            {
+              id: "overhangs",
+              title: "Overhang/Cantilever Analysis",
+              status: "pending",
+            },
+            {
+              id: "melting-validation",
+              title: "Melting Point Validation",
+              status: "pending",
+            },
+            {
+              id: "thermal-stress",
+              title: "Thermal Expansion & Stress Analysis",
+              status: "pending",
+            },
+            {
+              id: "heat-dissipation",
+              title: "Heat Dissipation & Cooling Check",
+              status: "pending",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "manufacturing",
+      title: "3. Manufacturing Feasibility Check",
+      status: "pending",
+      subItems: [
+        {
+          id: "hole-sizes",
+          title: "Drilled Hole Size Validation",
+          status: "pending",
+          details: "Checking for M6, M8 standards compliance",
+        },
+        {
+          id: "min-features",
+          title: "Minimum Feature Size Check",
+          status: "pending",
+          details: "Validating against machining limitations",
+        },
+      ],
+    },
+  ];
+
+  const renderValidationItem = (item: ValidationItem) => {
+    const isExpanded = expandedSections.includes(item.id);
+    const hasSubItems =
+      Array.isArray(item.subItems) && item.subItems.length > 0;
+
+    return (
+      <div key={item.id} className="mb-2">
+        <div
+          className={`flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer ${
+            hasSubItems ? "bg-gray-50" : ""
+          }`}
+          onClick={() => hasSubItems && toggleSection(item.id)}
+        >
+          {hasSubItems &&
+            (isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            ))}
+          {getStatusIcon(item.status)}
+          <span className="flex-1">{item.title}</span>
+          {item.details && (
+            <span className="text-sm text-gray-500">{item.details}</span>
+          )}
+        </div>
+
+        {isExpanded && hasSubItems && item.subItems && (
+          <div className="ml-6 mt-2 border-l-2 border-gray-200 pl-4">
+            {item.subItems.map((subItem) => renderValidationItem(subItem))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <div className="flex-none p-8">
-        <h1 className="text-3xl font-bold mb-4">
-          Engineering Design Guidelines
-        </h1>
+        <h1 className="text-3xl font-bold mb-4">Design Validation Checklist</h1>
         <Alert>
           <AlertDescription>
-            These guidelines must be followed for all new designs and design
-            revisions.
+            Running validation checks against engineering design guidelines.
           </AlertDescription>
         </Alert>
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 pt-0">
-        <div className="grid gap-6 md:grid-cols-2">
-          {guidelines.map((guideline, index) => (
-            <Card
-              key={index}
-              className={`${getPriorityColor(guideline.priority)}`}
-            >
-              <CardHeader className="flex flex-row items-center gap-4">
-                {getPriorityIcon(guideline.priority)}
-                <CardTitle className="text-lg">{guideline.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{guideline.content}</p>
-                <div className="mt-4 flex gap-2">
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-                    {guideline.type}
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
-                    {guideline.priority} priority
-                  </span>
+        <Card>
+          <CardHeader>
+            <CardTitle>Components Under Validation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              {components.map((comp) => (
+                <div
+                  key={comp.id}
+                  className="mb-2 p-2 bg-gray-50 rounded flex justify-between"
+                >
+                  <span>{comp.name}</span>
+                  <span className="text-gray-500">{comp.material}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Validation Checks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {validationChecks.map((check) => renderValidationItem(check))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
