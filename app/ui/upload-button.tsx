@@ -57,8 +57,9 @@ export default function CADUploadButton(): JSX.Element {
       const fileType = selectedFile.name.toLowerCase().split(".").pop();
 
       // Validate file type
-      if (!["step", "stp", "dxf", "zip"].includes(fileType || "")) {
-        setMessage("Please upload only STEP, DXF, or ZIP files.");
+      if (!["step", "stp", "dxf", "zip", "fcstd"].includes(fileType || "")) {
+        console.log("filetype", fileType);
+        setMessage("Please upload only STEP, DXF,FCStd, or ZIP files.");
         return;
       }
 
@@ -131,11 +132,11 @@ export default function CADUploadButton(): JSX.Element {
               id="file-upload"
               type="file"
               onChange={handleFileChange}
-              accept=".step,.stp,.dxf,.zip"
+              accept=".step,.stp,.dxf,.zip,.FCStd"
               className="hidden"
             />
             <p className="mt-2 text-xs text-gray-500">
-              Supported formats: STEP (.step, .stp), FreeCAD ZIP (.zip)
+              Supported formats: STEP (.step, .stp), FreeCAD ZIP (.zip,.FCStd)
             </p>
             {file && (
               <div className="mt-2">
