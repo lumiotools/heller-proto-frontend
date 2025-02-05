@@ -7,13 +7,24 @@ import { faUpload } from "@fortawesome/free-solid-svg-icons";
 import MarkdownPage from "./read-markdown";
 import { HTMLContent } from "./htmlParser";
 import MarkdownContent from "./MarkdownContent";
-import { faClock } from "@fortawesome/free-regular-svg-icons";
+import { faClock, faImage } from "@fortawesome/free-regular-svg-icons";
 
 interface APIResponse {
   markdown_report: string;
   detail?: string;
 }
+interface ImageInfo {
+  filename: string;
+  mime_type: string;
+  data: string;
+  size: number;
+}
 
+interface ImageAPIResponse {
+  message: string;
+  original_filename: string;
+  images: ImageInfo[];
+}
 export default function CADUploadButton(): JSX.Element {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -21,7 +32,8 @@ export default function CADUploadButton(): JSX.Element {
   const [markdownReport, setMarkdownReport] = useState<string | null>(null);
   const [timer, setTimer] = useState<number>(0);
   const [totalTime, setTotalTime] = useState<number | null>(null);
-
+  const [images, setImages] = useState<ImageInfo[]>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState<boolean>(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   // Timer effect
@@ -68,13 +80,39 @@ export default function CADUploadButton(): JSX.Element {
       setMarkdownReport(null);
     }
   };
+  const extractImages = async (uploadedFile: File) => {
+    setIsLoadingImages(true);
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
 
+    try {
+      const response = await fetch(`${API_URL}/extract-images`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result: ImageAPIResponse = await response.json();
+        setImages(result.images);
+        console.log("success image", result);
+      } else {
+        console.error("Failed to extract images");
+      }
+    } catch (error) {
+      console.error("Image extraction error:", error);
+    } finally {
+      setIsLoadingImages(false);
+    }
+  };
   const handleSubmit = async () => {
     if (!file) {
       setMessage("Please select a file before submitting.");
       return;
     }
-
+    const fileExt = file.name.toLowerCase().split(".").pop();
+    if (fileExt === "zip" || fileExt === "fcstd") {
+      await extractImages(file);
+    }
     setIsLoading(true);
     setMarkdownReport(null);
 
@@ -187,6 +225,42 @@ export default function CADUploadButton(): JSX.Element {
               <p className="text-xs text-blue-700">
                 Total processing time for CAD analysis
               </p>
+            </div>
+          </div>
+        )}
+        {/* Images Section */}
+        {/* Images Section */}
+        {images.length > 0 && (
+          <div className="mt-8 mb-8">
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <FontAwesomeIcon icon={faImage} className="mr-2" />
+                Images
+              </h2>
+              <div className="space-y-4">
+                {images.map((image, index) => (
+                  <div
+                    key={index}
+                    className="bg-white p-6 rounded-lg shadow-lg"
+                  >
+                    <div className="flex flex-col items-center">
+                      <img
+                        src={image.data}
+                        alt={image.filename}
+                        className="max-w-full h-96 object-contain mb-4"
+                      />
+                      <div className="text-center">
+                        <p className="text-sm font-medium text-gray-700">
+                          {image.filename}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Size: {(image.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
