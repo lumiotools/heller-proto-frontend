@@ -3,7 +3,7 @@
 
 import React, { JSX, useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faUpload } from "@fortawesome/free-solid-svg-icons";
 import MarkdownPage from "./read-markdown";
 import { HTMLContent } from "./htmlParser";
 import MarkdownContent from "./MarkdownContent";
@@ -19,7 +19,6 @@ export default function CADUploadButton(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [markdownReport, setMarkdownReport] = useState<string | null>(null);
   const [timer, setTimer] = useState<number>(0);
-  const [totalTime, setTotalTime] = useState<number | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -32,9 +31,6 @@ export default function CADUploadButton(): JSX.Element {
         setTimer((prevTimer) => prevTimer + 1);
       }, 1000);
     } else {
-      if (timer > 0) {
-        setTotalTime(timer);
-      }
       setTimer(0);
     }
     return () => {
@@ -42,7 +38,7 @@ export default function CADUploadButton(): JSX.Element {
         clearInterval(interval);
       }
     };
-  }, [isLoading, timer]);
+  }, [isLoading]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -64,7 +60,6 @@ export default function CADUploadButton(): JSX.Element {
       setFile(selectedFile);
       setMessage(null);
       setMarkdownReport(null);
-      setTotalTime(null);
     }
   };
 
@@ -76,7 +71,6 @@ export default function CADUploadButton(): JSX.Element {
 
     setIsLoading(true);
     setMarkdownReport(null);
-    setTotalTime(null);
 
     const formData = new FormData();
     formData.append("file", file);
@@ -182,25 +176,10 @@ export default function CADUploadButton(): JSX.Element {
         {markdownReport && (
           <div className="mt-8">
             <div className="border-t pt-6">
-              {/* Analysis Time Block */}
-              {totalTime !== null && (
-                <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center">
-                  <FontAwesomeIcon
-                    icon={faClock}
-                    className="text-blue-500 mr-3"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">
-                      Analysis completed in {formatTime(totalTime)}
-                    </p>
-                    <p className="text-xs text-blue-700">
-                      Total processing time for CAD analysis
-                    </p>
-                  </div>
-                </div>
-              )}
-
+              {/* <h2 className="text-xl font-semibold mb-4">CAD Analysis Report</h2> */}
               <div className="bg-white p-6 rounded-lg shadow-lg">
+                {/* <MarkdownPage markdown={markdownReport} /> */}
+                {/* <HTMLContent htmlContent={markdownReport} /> */}
                 <MarkdownContent markdownContent={markdownReport} />
               </div>
             </div>

@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import MarkdownConverter from "./MarkdownConverter";
 import { usePDF } from "react-to-pdf";
