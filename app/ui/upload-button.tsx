@@ -7,6 +7,7 @@ import { faUpload } from "@fortawesome/free-solid-svg-icons";
 import MarkdownPage from "./read-markdown";
 import { HTMLContent } from "./htmlParser";
 import MarkdownContent from "./MarkdownContent";
+import { faClock } from "@fortawesome/free-regular-svg-icons";
 
 interface APIResponse {
   markdown_report: string;
@@ -19,6 +20,7 @@ export default function CADUploadButton(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [markdownReport, setMarkdownReport] = useState<string | null>(null);
   const [timer, setTimer] = useState<number>(0);
+  const [totalTime, setTotalTime] = useState<number | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -31,6 +33,9 @@ export default function CADUploadButton(): JSX.Element {
         setTimer((prevTimer) => prevTimer + 1);
       }, 1000);
     } else {
+      if (timer > 0) {
+        setTotalTime(timer);
+      }
       setTimer(0);
     }
     return () => {
@@ -171,7 +176,19 @@ export default function CADUploadButton(): JSX.Element {
             </p>
           )}
         </div>
-
+        {totalTime !== null && (
+          <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center">
+            <FontAwesomeIcon icon={faClock} className="text-blue-500 mr-3" />
+            <div>
+              <p className="text-sm font-medium text-blue-900">
+                Analysis completed in {formatTime(totalTime)}
+              </p>
+              <p className="text-xs text-blue-700">
+                Total processing time for CAD analysis
+              </p>
+            </div>
+          </div>
+        )}
         {/* Analysis Results Section */}
         {markdownReport && (
           <div className="mt-8">
