@@ -11,8 +11,16 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   markdownContent,
 }) => {
   const [htmlContent, setHtmlContent] = useState<string>("");
+  const getFormattedTimestamp = (): string => {
+    const now = new Date();
+    return now
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .replace("T", "_")
+      .slice(0, 19); // Gets YYYY-MM-DD_HH-mm-ss format
+  };
   const { toPDF, targetRef } = usePDF({
-    filename: "CAD_Analysis_Report.pdf",
+    filename: `CAD_Analysis_Report_${getFormattedTimestamp()}.pdf`,
     page: {
       margin: 30,
       format: "a4",
