@@ -42,6 +42,12 @@ const Header = () => {
               >
                 Guidelines
               </Link>
+              <Link
+                href="/dataCollect"
+                className="px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-900/20 rounded-md transition-colors text-sm font-medium"
+              >
+                Collect Data
+              </Link>
             </div>
           </nav>
 
