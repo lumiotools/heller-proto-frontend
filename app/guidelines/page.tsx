@@ -197,7 +197,7 @@ const Guidelines: React.FC = () => {
           className="space-y-6"
           onValueChange={(value) => setActiveTab(value as CategoryType)}
         >
-          <TabsList className="w-full flex justify-start bg-transparent h-auto p-0 gap-2">
+          <TabsList className="w-full flex justify-start bg-transparent h-auto py-4 space-x-4">
             <TooltipProvider>
               {Object.entries(categoryShortTitles).map(
                 ([category, shortTitle]) => (
@@ -205,11 +205,11 @@ const Guidelines: React.FC = () => {
                     <TooltipTrigger asChild>
                       <TabsTrigger
                         value={category}
-                        className={`px-6 py-3 rounded-xl text-sm font-medium 
+                        className={`px-6 py-2.5 rounded-2xl text-base font-medium flex-1
                         transition-all duration-200
                         ${
                           category === activeTab
-                            ? "bg-[#392E7B] text-white"
+                            ? "bg-[#392E7B] text-white shadow-none"
                             : "bg-white text-gray-600 shadow-sm border border-gray-100"
                         }`}
                       >
@@ -225,7 +225,7 @@ const Guidelines: React.FC = () => {
             </TooltipProvider>
           </TabsList>
 
-          {Object.entries(categoryFullTitles).map(([category]) => (
+          {Object.entries(categoryFullTitles).map(([category, fullTitle]) => (
             <TabsContent
               key={category}
               value={category}
@@ -236,14 +236,17 @@ const Guidelines: React.FC = () => {
                   categoryColors[category as CategoryType]
                 } shadow-sm`}
               >
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
+                <CardContent className="py-6 px-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6 px-4">
+                    {fullTitle}
+                  </h2>
+                  <div className="space-y-3">
                     {guidelines
                       .filter((item) => item.category === category)
                       .map((guideline, index) => (
                         <Alert
                           key={index}
-                          className="flex items-center space-x-4 border bg-white 
+                          className="flex items-center gap-4 border bg-white 
                             hover:bg-gray-50 transition-colors duration-200"
                         >
                           <div className="flex-shrink-0">{guideline.icon}</div>
