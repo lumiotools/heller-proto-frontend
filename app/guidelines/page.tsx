@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +48,8 @@ interface GuidelineItem {
 }
 
 const Guidelines: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<CategoryType>("thermal");
+
   const guidelines: GuidelineItem[] = [
     {
       icon: <Heater className="text-red-500" size={24} />,
@@ -156,15 +159,14 @@ const Guidelines: React.FC = () => {
   ];
 
   const categoryColors: Record<CategoryType, string> = {
-    thermal: "bg-orange-50 border-orange-200",
-    mechanical: "bg-blue-50 border-blue-200",
-    safety: "bg-red-50 border-red-200",
-    assembly: "bg-green-50 border-green-200",
-    logistics: "bg-purple-50 border-purple-200",
-    specifications: "bg-gray-50 border-gray-200",
+    thermal: "bg-orange-50 border-orange-100",
+    mechanical: "bg-blue-50 border-blue-100",
+    safety: "bg-red-50 border-red-100",
+    assembly: "bg-green-50 border-green-100",
+    logistics: "bg-purple-50 border-purple-100",
+    specifications: "bg-gray-50 border-gray-100",
   };
 
-  // Short titles for tabs
   const categoryShortTitles: Record<CategoryType, string> = {
     thermal: "Thermal",
     mechanical: "Mechanical",
@@ -174,7 +176,6 @@ const Guidelines: React.FC = () => {
     specifications: "Specs",
   };
 
-  // Full titles for tooltips
   const categoryFullTitles: Record<CategoryType, string> = {
     thermal: "Thermal Considerations",
     mechanical: "Mechanical Design",
@@ -185,39 +186,44 @@ const Guidelines: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8 font-montserrat">
+    <div className="min-h-screen bg-white p-8 font-montserrat">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-[#0a0a2e] mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Mechanical Design Guidelines
         </h1>
 
-        <Tabs defaultValue="thermal" className="space-y-6">
-          <div className="bg-[#0a0a2e] rounded-lg shadow-lg">
-            <TabsList className="w-full flex justify-between bg-transparent p-1">
-              <TooltipProvider>
-                {Object.entries(categoryShortTitles).map(
-                  ([category, shortTitle]) => (
-                    <Tooltip key={category}>
-                      <TooltipTrigger>
-                        <TabsTrigger
-                          value={category}
-                          className="px-4 py-2 rounded-md text-sm font-medium 
-                          bg-blue-900/20 text-gray-300 hover:text-white hover:bg-blue-800/40
-                          data-[state=active]:bg-blue-500 data-[state=active]:text-white
-                          transition-all duration-200"
-                        >
-                          {shortTitle}
-                        </TabsTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{categoryFullTitles[category as CategoryType]}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )
-                )}
-              </TooltipProvider>
-            </TabsList>
-          </div>
+        <Tabs
+          defaultValue="thermal"
+          className="space-y-6"
+          onValueChange={(value) => setActiveTab(value as CategoryType)}
+        >
+          <TabsList className="w-full flex justify-start bg-transparent h-auto p-0 gap-2">
+            <TooltipProvider>
+              {Object.entries(categoryShortTitles).map(
+                ([category, shortTitle]) => (
+                  <Tooltip key={category}>
+                    <TooltipTrigger asChild>
+                      <TabsTrigger
+                        value={category}
+                        className={`px-6 py-3 rounded-xl text-sm font-medium 
+                        transition-all duration-200
+                        ${
+                          category === activeTab
+                            ? "bg-[#392E7B] text-white"
+                            : "bg-white text-gray-600 shadow-sm border border-gray-100"
+                        }`}
+                      >
+                        {shortTitle}
+                      </TabsTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{categoryFullTitles[category as CategoryType]}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              )}
+            </TooltipProvider>
+          </TabsList>
 
           {Object.entries(categoryFullTitles).map(([category]) => (
             <TabsContent
@@ -226,9 +232,9 @@ const Guidelines: React.FC = () => {
               className="mt-6 transition-all duration-300"
             >
               <Card
-                className={`border-2 ${
+                className={`border ${
                   categoryColors[category as CategoryType]
-                } shadow-lg`}
+                } shadow-sm`}
               >
                 <CardContent className="pt-6">
                   <div className="space-y-4">
@@ -237,8 +243,8 @@ const Guidelines: React.FC = () => {
                       .map((guideline, index) => (
                         <Alert
                           key={index}
-                          className="flex items-center space-x-4 border bg-white/90 backdrop-blur-sm
-                            hover:bg-white transition-colors duration-200"
+                          className="flex items-center space-x-4 border bg-white 
+                            hover:bg-gray-50 transition-colors duration-200"
                         >
                           <div className="flex-shrink-0">{guideline.icon}</div>
                           <AlertDescription className="text-gray-700">
