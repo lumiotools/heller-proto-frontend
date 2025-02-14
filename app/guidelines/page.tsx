@@ -205,7 +205,7 @@ const Guidelines: React.FC = () => {
                     <TooltipTrigger asChild>
                       <TabsTrigger
                         value={category}
-                        className={`px-6 py-2.5 rounded-2xl text-base font-medium flex-1
+                        className={`px-6 py-2.5 rounded-lg text-base font-medium flex-1
                         transition-all duration-200
                         ${
                           category === activeTab
