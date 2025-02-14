@@ -1,18 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { JSX, useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUpload } from "@fortawesome/free-solid-svg-icons";
-import MarkdownPage from "./read-markdown";
-import { HTMLContent } from "./htmlParser";
+import { Upload, Clock, Image } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+// import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import MarkdownContent from "./MarkdownContent";
-import { faClock, faImage } from "@fortawesome/free-regular-svg-icons";
 
 interface APIResponse {
   markdown_report: string;
   detail?: string;
 }
+
 interface ImageInfo {
   filename: string;
   mime_type: string;
@@ -25,6 +25,7 @@ interface ImageAPIResponse {
   original_filename: string;
   images: ImageInfo[];
 }
+
 export default function CADUploadButton(): JSX.Element {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +37,6 @@ export default function CADUploadButton(): JSX.Element {
   const [isLoadingImages, setIsLoadingImages] = useState<boolean>(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isLoading) {
@@ -67,19 +67,16 @@ export default function CADUploadButton(): JSX.Element {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       const fileType = selectedFile.name.toLowerCase().split(".").pop();
-
-      // Validate file type
       if (!["step", "stp", "dxf", "zip", "fcstd"].includes(fileType || "")) {
-        console.log("filetype", fileType);
-        setMessage("Please upload only STEP, DXF,FCStd, or ZIP files.");
+        setMessage("Please upload only STEP, DXF, FCStd, or ZIP files.");
         return;
       }
-
       setFile(selectedFile);
       setMessage(null);
       setMarkdownReport(null);
     }
   };
+
   const extractImages = async (uploadedFile: File) => {
     setIsLoadingImages(true);
     const formData = new FormData();
@@ -94,7 +91,6 @@ export default function CADUploadButton(): JSX.Element {
       if (response.ok) {
         const result: ImageAPIResponse = await response.json();
         setImages(result.images);
-        console.log("success image", result);
       } else {
         console.error("Failed to extract images");
       }
@@ -104,6 +100,7 @@ export default function CADUploadButton(): JSX.Element {
       setIsLoadingImages(false);
     }
   };
+
   const handleSubmit = async () => {
     if (!file) {
       setMessage("Please select a file before submitting.");
@@ -130,7 +127,6 @@ export default function CADUploadButton(): JSX.Element {
 
       if (response.ok) {
         const result: APIResponse = await response.json();
-        console.log("result", result);
         if (result.markdown_report) {
           setMarkdownReport(result.markdown_report);
           setMessage(null);
@@ -154,129 +150,140 @@ export default function CADUploadButton(): JSX.Element {
   };
 
   return (
-    <div className="h-screen overflow-y-auto overflow-x-hidden">
-      <div className="p-4 max-w-4xl mx-auto w-full">
-        <div className="mb-6 space-y-6">
-          {/* File Upload Section */}
-          <div>
-            <label
-              htmlFor="file-upload"
-              className="flex items-center px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 cursor-pointer w-fit"
-            >
-              Upload CAD File
-              <FontAwesomeIcon icon={faUpload} className="ml-2" />
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              onChange={handleFileChange}
-              accept=".step,.stp,.dxf,.zip,.FCStd"
-              className="hidden"
-            />
-            <p className="mt-2 text-xs text-gray-500">
-              Supported formats: STEP (.step, .stp), FreeCAD ZIP (.zip,.FCStd)
-            </p>
-            {file && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-700 font-medium">
-                  Selected File: {file.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Size: {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-              </div>
-            )}
-          </div>
+    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="max-w-4xl mx-auto space-y-6 p-6">
+          <Card className="bg-white/80 backdrop-blur-sm border-blue-100">
+            <CardHeader>
+              <CardTitle className="text-2xl text-blue-900">
+                CAD File Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <label
+                  htmlFor="file-upload"
+                  className="group relative flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer"
+                >
+                  <div className="space-y-2 text-center">
+                    <Upload className="mx-auto h-8 w-8 text-blue-500" />
+                    <div className="text-sm text-blue-900">
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      STEP (.step, .stp), FreeCAD ZIP (.zip, .FCStd)
+                    </p>
+                  </div>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    onChange={handleFileChange}
+                    accept=".step,.stp,.dxf,.zip,.FCStd"
+                    className="hidden"
+                  />
+                </label>
 
-          {/* Submit Button */}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className={`w-full px-6 py-3 ${
-              isLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600"
-            } text-white font-semibold rounded-lg transition-all duration-200`}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Analyzing CAD File... ({formatTime(timer)})
-              </div>
-            ) : (
-              "Analyze CAD File"
-            )}
-          </button>
+                {file && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-900 font-medium">
+                      Selected: {file.name}
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Size: {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                  </div>
+                )}
 
-          {message && (
-            <p className="text-sm text-red-500 bg-red-50 p-3 rounded-lg">
-              {message}
-            </p>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      <span>Analyzing... ({formatTime(timer)})</span>
+                    </div>
+                  ) : (
+                    "Analyze CAD File"
+                  )}
+                </Button>
+
+                {message && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{message}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+
+              {totalTime !== null && (
+                <Alert className="bg-blue-50 border-blue-200">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-900">
+                    Analysis Complete
+                  </AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    Processed in {formatTime(totalTime)}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {(images.length > 0 || isLoadingImages) && (
+            <Card className="bg-white/80 backdrop-blur-sm border-blue-100">
+              <CardHeader>
+                <CardTitle className="text-xl text-blue-900 flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  Generated Images
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingImages ? (
+                  <div className="flex flex-col items-center justify-center p-12 space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600" />
+                    <p className="text-blue-900 text-sm">
+                      Extracting images...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg shadow-sm border border-blue-100 overflow-hidden"
+                      >
+                        <img
+                          src={image.data}
+                          alt={image.filename}
+                          className="w-full h-64 object-contain bg-gray-50"
+                        />
+                        <div className="p-4">
+                          <p className="text-sm font-medium text-blue-900">
+                            {image.filename}
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            Size: {(image.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {markdownReport && (
+            <Card className="bg-white/80 backdrop-blur-sm border-blue-100">
+              <CardContent className="p-6">
+                <MarkdownContent markdownContent={markdownReport} />
+              </CardContent>
+            </Card>
           )}
         </div>
-        {totalTime !== null && (
-          <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center">
-            <FontAwesomeIcon icon={faClock} className="text-blue-500 mr-3" />
-            <div>
-              <p className="text-sm font-medium text-blue-900">
-                Analysis completed in {formatTime(totalTime)}
-              </p>
-              <p className="text-xs text-blue-700">
-                Total processing time for CAD analysis
-              </p>
-            </div>
-          </div>
-        )}
-        {/* Images Section */}
-        {/* Images Section */}
-        {images.length > 0 && (
-          <div className="mt-8 mb-8">
-            <div className="border-t pt-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <FontAwesomeIcon icon={faImage} className="mr-2" />
-                Images
-              </h2>
-              <div className="space-y-4">
-                {images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="bg-white p-6 rounded-lg shadow-lg"
-                  >
-                    <div className="flex flex-col items-center">
-                      <img
-                        src={image.data}
-                        alt={image.filename}
-                        className="max-w-full h-96 object-contain mb-4"
-                      />
-                      <div className="text-center">
-                        <p className="text-sm font-medium text-gray-700">
-                          {image.filename}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Size: {(image.size / 1024).toFixed(2)} KB
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Analysis Results Section */}
-        {markdownReport && (
-          <div className="mt-8">
-            <div className="border-t pt-6">
-              {/* <h2 className="text-xl font-semibold mb-4">CAD Analysis Report</h2> */}
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                {/* <MarkdownPage markdown={markdownReport} /> */}
-                {/* <HTMLContent htmlContent={markdownReport} /> */}
-                <MarkdownContent markdownContent={markdownReport} />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

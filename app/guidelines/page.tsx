@@ -1,272 +1,216 @@
-"use client";
-
-import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  ChevronDown,
-  ChevronRight,
+  Heater,
+  Fan,
+  Paintbrush,
+  ShipWheel,
+  Boxes,
+  Shield,
+  RotateCcw,
+  Square,
+  Container,
+  Link,
+  SwitchCamera,
+  Cog,
+  FileCheck,
+  Truck,
+  Anchor,
+  ShoppingCart,
+  Ruler,
+  AlertTriangle,
+  LoaderPinwheel,
+  Power,
+  SquarePower,
 } from "lucide-react";
 
-interface ValidationItem {
-  id: string;
-  title: string;
-  status: "pending" | "pass" | "fail";
-  details?: string;
-  subItems?: ValidationItem[];
+type CategoryType =
+  | "thermal"
+  | "mechanical"
+  | "safety"
+  | "assembly"
+  | "logistics"
+  | "specifications";
+
+interface GuidelineItem {
+  icon: React.ReactNode;
+  text: string;
+  category: CategoryType;
 }
 
-interface ComponentData {
-  id: string;
-  name: string;
-  material?: string;
-  thermalConductivity?: number;
-  thermalExpansion?: number;
-  meltingPoint?: number;
-  thickness?: number;
-}
-
-export default function ValidationChecklist() {
-  const [expandedSections, setExpandedSections] = useState<string[]>([]);
-
-  const toggleSection = (id: string) => {
-    setExpandedSections((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pass":
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case "fail":
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
-    }
-  };
-
-  const components: ComponentData[] = [
+const Guidelines: React.FC = () => {
+  const guidelines: GuidelineItem[] = [
     {
-      id: "comp1",
-      name: "Base Plate",
-      material: "Aluminum 6061",
-      thermalConductivity: 167,
-      thermalExpansion: 23.6,
-      meltingPoint: 652,
-      thickness: 3.2,
-    },
-    // Add more components as needed
-  ];
-
-  const validationChecks: ValidationItem[] = [
-    {
-      id: "geometry",
-      title: "1. Geometry Integrity Check",
-      status: "pending",
-      subItems: [
-        {
-          id: "components",
-          title: "Component List",
-          status: "pass",
-          details: `${components.length} components found`,
-        },
-        {
-          id: "solid-validation",
-          title: "Solid Validation",
-          status: "pending",
-          subItems: [
-            {
-              id: "open-edges",
-              title: "Open Edges/Gaps Check",
-              status: "pending",
-            },
-            {
-              id: "overlapping",
-              title: "Overlapping Bodies Check",
-              status: "pending",
-            },
-            {
-              id: "zero-thickness",
-              title: "Zero-thickness Geometry Check",
-              status: "pending",
-            },
-          ],
-        },
-      ],
+      icon: <Heater className="text-red-500" size={24} />,
+      text: "Minimize heat paths to outside.",
+      category: "thermal",
     },
     {
-      id: "structural",
-      title: "2. Structural Analysis and Material Validation",
-      status: "pending",
-      subItems: [
-        {
-          id: "material-check",
-          title: "Aluminum Material Validation",
-          status: "pending",
-        },
-        {
-          id: "thermal-props",
-          title: "Thermal Properties",
-          status: "pending",
-          subItems: [
-            {
-              id: "conductivity",
-              title: "Thermal Conductivity",
-              status: "pending",
-            },
-            {
-              id: "expansion",
-              title: "Thermal Expansion Coefficient",
-              status: "pending",
-            },
-            {
-              id: "melting",
-              title: "Melting Point",
-              status: "pending",
-            },
-          ],
-        },
-        {
-          id: "structural-checks",
-          title: "Structural Checks",
-          status: "pending",
-          subItems: [
-            {
-              id: "thickness",
-              title: "Thickness Validation (>2mm)",
-              status: "pending",
-            },
-            {
-              id: "material-assignment",
-              title: "Material Assignment Check",
-              status: "pending",
-            },
-            {
-              id: "overhangs",
-              title: "Overhang/Cantilever Analysis",
-              status: "pending",
-            },
-            {
-              id: "melting-validation",
-              title: "Melting Point Validation",
-              status: "pending",
-            },
-            {
-              id: "thermal-stress",
-              title: "Thermal Expansion & Stress Analysis",
-              status: "pending",
-            },
-            {
-              id: "heat-dissipation",
-              title: "Heat Dissipation & Cooling Check",
-              status: "pending",
-            },
-          ],
-        },
-      ],
+      icon: <Fan className="text-blue-500" size={24} />,
+      text: "Adequate ventilation - muffin fans to cool cap and base.",
+      category: "thermal",
     },
     {
-      id: "manufacturing",
-      title: "3. Manufacturing Feasibility Check",
-      status: "pending",
-      subItems: [
-        {
-          id: "hole-sizes",
-          title: "Drilled Hole Size Validation",
-          status: "pending",
-          details: "Checking for M6, M8 standards compliance",
-        },
-        {
-          id: "min-features",
-          title: "Minimum Feature Size Check",
-          status: "pending",
-          details: "Validating against machining limitations",
-        },
-      ],
+      icon: <Paintbrush className="text-purple-500" size={24} />,
+      text: "Proper finish called on all detail drawings.",
+      category: "specifications",
+    },
+    {
+      icon: <ShipWheel className="text-gray-500" size={24} />,
+      text: "Use aluminized steel wherever possible in heated regions.",
+      category: "thermal",
+    },
+    {
+      icon: <Boxes className="text-amber-500" size={24} />,
+      text: "Apply as much as possible one piece instead of multiple pieces.",
+      category: "mechanical",
+    },
+    {
+      icon: <Shield className="text-green-500" size={24} />,
+      text: "Review structural members for acceptable stress and deflection.",
+      category: "mechanical",
+    },
+    {
+      icon: <RotateCcw className="text-blue-600" size={24} />,
+      text: "All rotating members must joined with key or pin, do not rely setscrew alone. In cases where only a setscrew can be used (impeller hub for example) check screw diameter with formula found in Machinery's Handbook.",
+      category: "mechanical",
+    },
+    {
+      icon: <Square className="text-gray-600" size={24} />,
+      text: "Flat on all shafts where set screw bear.",
+      category: "mechanical",
+    },
+    {
+      icon: <Container className="text-red-600" size={24} />,
+      text: "Avoid through holes in any part used for nitrogen containment.",
+      category: "safety",
+    },
+    {
+      icon: <Link className="text-yellow-600" size={24} />,
+      text: "Provision for routing of drive chains.",
+      category: "mechanical",
+    },
+    {
+      icon: <SwitchCamera className="text-purple-600" size={24} />,
+      text: "Provision for mounting of limit switches, with easy access for service tech. If mounting a limit switch to a moving member then also design in a cable carrier.",
+      category: "assembly",
+    },
+    {
+      icon: <Cog className="text-blue-700" size={24} />,
+      text: "Provisions for mounting of all drive motors and encoders.",
+      category: "assembly",
+    },
+    {
+      icon: <FileCheck className="text-green-600" size={24} />,
+      text: "Appropriate drawings been marked 'make from' or 'similar to' to save time at vendor.",
+      category: "specifications",
+    },
+    {
+      icon: <Truck className="text-orange-500" size={24} />,
+      text: "Effects of shipping considered in the design (i.e. vibration, low temperatures, and shock loads).",
+      category: "logistics",
+    },
+    {
+      icon: <Anchor className="text-gray-700" size={24} />,
+      text: "Provisions made for shipping (i.e. holes for anchoring to a skid).",
+      category: "logistics",
+    },
+    {
+      icon: <ShoppingCart className="text-indigo-500" size={24} />,
+      text: "Buy versus make considered for each part.",
+      category: "logistics",
+    },
+    {
+      icon: <Ruler className="text-teal-500" size={24} />,
+      text: "Product does not exceed 24-inch useable region of 30-inch module, 28-inch for 34-inch module and 30-inch for 36-inch module.",
+      category: "specifications",
+    },
+    {
+      icon: <AlertTriangle className="text-yellow-500" size={24} />,
+      text: "Review design for interference between subsystems.",
+      category: "mechanical",
+    },
+    {
+      icon: <LoaderPinwheel className="text-red-700" size={24} />,
+      text: "No sintered bearings in heated regions. Use graph alloy (400C) or Igus (252C).",
+      category: "mechanical",
+    },
+    {
+      icon: <Power className="text-orange-600" size={24} />,
+      text: "Do not exceed PV rating of bearings.",
+      category: "mechanical",
+    },
+    {
+      icon: <SquarePower className="text-blue-800" size={24} />,
+      text: "Limit switch actuators should designed to prevent accidental damage to switch.",
+      category: "safety",
     },
   ];
 
-  const renderValidationItem = (item: ValidationItem) => {
-    const isExpanded = expandedSections.includes(item.id);
-    const hasSubItems =
-      Array.isArray(item.subItems) && item.subItems.length > 0;
+  const categoryColors: Record<CategoryType, string> = {
+    thermal: "bg-red-50 border-red-200",
+    mechanical: "bg-blue-50 border-blue-200",
+    safety: "bg-yellow-50 border-yellow-200",
+    assembly: "bg-green-50 border-green-200",
+    logistics: "bg-purple-50 border-purple-200",
+    specifications: "bg-gray-50 border-gray-200",
+  };
 
-    return (
-      <div key={item.id} className="mb-2">
-        <div
-          className={`flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer ${
-            hasSubItems ? "bg-gray-50" : ""
-          }`}
-          onClick={() => hasSubItems && toggleSection(item.id)}
-        >
-          {hasSubItems &&
-            (isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            ))}
-          {getStatusIcon(item.status)}
-          <span className="flex-1">{item.title}</span>
-          {item.details && (
-            <span className="text-sm text-gray-500">{item.details}</span>
-          )}
-        </div>
-
-        {isExpanded && hasSubItems && item.subItems && (
-          <div className="ml-6 mt-2 border-l-2 border-gray-200 pl-4">
-            {item.subItems.map((subItem) => renderValidationItem(subItem))}
-          </div>
-        )}
-      </div>
-    );
+  const categoryTitles: Record<CategoryType, string> = {
+    thermal: "Thermal Considerations",
+    mechanical: "Mechanical Design",
+    safety: "Safety Requirements",
+    assembly: "Assembly & Installation",
+    logistics: "Logistics & Manufacturing",
+    specifications: "Specifications & Documentation",
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <div className="flex-none p-8">
-        <h1 className="text-3xl font-bold mb-4">Design Validation Checklist</h1>
-        <Alert>
-          <AlertDescription>
-            Running validation checks against engineering design guidelines.
-          </AlertDescription>
-        </Alert>
-      </div>
-
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-8 pt-0">
-        <Card>
+    <div className="h-screen overflow-y-auto bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Components Under Validation</CardTitle>
+            <CardTitle className="text-3xl font-bold text-gray-800">
+              Mechanical Design Guidelines
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              {components.map((comp) => (
-                <div
-                  key={comp.id}
-                  className="mb-2 p-2 bg-gray-50 rounded flex justify-between"
-                >
-                  <span>{comp.name}</span>
-                  <span className="text-gray-500">{comp.material}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
         </Card>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Validation Checks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {validationChecks.map((check) => renderValidationItem(check))}
-            </div>
-          </CardContent>
-        </Card>
+        {Object.entries(categoryTitles).map(([category, title]) => (
+          <Card
+            key={category}
+            className={`mb-6 ${
+              category === "specifications" ? "mb-14" : ""
+            } border-2 ${categoryColors[category as CategoryType]}`}
+          >
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-gray-700">
+                {title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {guidelines
+                  .filter((item) => item.category === category)
+                  .map((guideline, index) => (
+                    <Alert
+                      key={index}
+                      className="flex items-center space-x-4 border bg-white"
+                    >
+                      <div className="flex-shrink-0">{guideline.icon}</div>
+                      <AlertDescription className="text-gray-700">
+                        {guideline.text}
+                      </AlertDescription>
+                    </Alert>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+export default Guidelines;
