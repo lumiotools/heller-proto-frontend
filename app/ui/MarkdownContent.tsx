@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import MarkdownConverter from "./MarkdownConverter";
 import { usePDF } from "react-to-pdf";
+import { Button } from "@/components/ui/button";
 
 interface MarkdownContentProps {
   markdownContent: string;
@@ -54,9 +55,9 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
 
   return (
     <div className="relative">
-      <button
+      <Button
         onClick={handleDownloadPDF}
-        className="absolute top-0 right-0 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-2"
+        className="absolute top-0 right-0 bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md transition-all flex items-center gap-2"
         aria-label="Download PDF"
       >
         <svg
@@ -73,7 +74,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
           />
         </svg>
         Download PDF
-      </button>
+      </Button>
       <div
         ref={targetRef}
         className="markdown-content prose prose-sm max-w-full overflow-hidden mt-12"

@@ -1,41 +1,78 @@
-import React from "react";
-import { Cpu } from "lucide-react";
+"use client";
+
+import React, { useState } from "react";
+import { Cpu, Menu } from "lucide-react";
 import Link from "next/link";
 
 const Header = () => {
-  return (
-    <header className="bg-white border-b border-slate-200">
-      <div className="h-16 px-8 mx-auto flex items-center justify-between bg-gradient-to-r from-slate-50 to-blue-50">
-        {/* Logo and title section */}
-        <Link href="/" className="flex items-center space-x-3">
-          <div className="p-2 rounded-lg bg-blue-50">
-            <Cpu className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-800">
-              AI CAD Analyzer
-            </h1>
-            <p className="text-sm text-slate-500">
-              Intelligent Design Analysis
-            </p>
-          </div>
-        </Link>
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-        {/* Navigation */}
-        <nav className="hidden sm:flex items-center space-x-8">
-          <Link
-            href="/"
-            className="text-slate-600 hover:text-blue-600 transition-colors text-sm font-medium"
-          >
-            Dashboard
+  return (
+    <header className="bg-[#0a0a2e] text-white font-montserrat">
+      <div className="container mx-auto">
+        {/* Main Navigation */}
+        <div className="h-16 px-4 lg:px-8 flex items-center justify-between">
+          {/* Logo and title section */}
+          <Link href="/" className="flex items-center space-x-3">
+            <div className="p-2 rounded-lg bg-blue-900/20">
+              <Cpu className="h-6 w-6 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-white">
+                AI CAD Analyzer
+              </h1>
+              <p className="text-sm text-gray-400">
+                Intelligent Design Analysis
+              </p>
+            </div>
           </Link>
-          <Link
-            href="/guidelines"
-            className="text-slate-600 hover:text-blue-600 transition-colors text-sm font-medium"
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center">
+            <div className="flex space-x-1">
+              <Link
+                href="/"
+                className="px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-900/20 rounded-md transition-colors text-sm font-medium"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/guidelines"
+                className="px-4 py-2 text-gray-300 hover:text-white hover:bg-blue-900/20 rounded-md transition-colors text-sm font-medium"
+              >
+                Guidelines
+              </Link>
+            </div>
+          </nav>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-blue-900/20"
           >
-            Guidelines
-          </Link>
-        </nav>
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden px-4 py-2 border-t border-blue-900/30">
+            <nav className="space-y-1">
+              <Link
+                href="/"
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-blue-900/20 rounded-md transition-colors text-sm font-medium"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/guidelines"
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-blue-900/20 rounded-md transition-colors text-sm font-medium"
+              >
+                Guidelines
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -1,6 +1,13 @@
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Heater,
   Fan,
@@ -149,15 +156,26 @@ const Guidelines: React.FC = () => {
   ];
 
   const categoryColors: Record<CategoryType, string> = {
-    thermal: "bg-red-50 border-red-200",
+    thermal: "bg-orange-50 border-orange-200",
     mechanical: "bg-blue-50 border-blue-200",
-    safety: "bg-yellow-50 border-yellow-200",
+    safety: "bg-red-50 border-red-200",
     assembly: "bg-green-50 border-green-200",
     logistics: "bg-purple-50 border-purple-200",
     specifications: "bg-gray-50 border-gray-200",
   };
 
-  const categoryTitles: Record<CategoryType, string> = {
+  // Short titles for tabs
+  const categoryShortTitles: Record<CategoryType, string> = {
+    thermal: "Thermal",
+    mechanical: "Mechanical",
+    safety: "Safety",
+    assembly: "Assembly",
+    logistics: "Logistics",
+    specifications: "Specs",
+  };
+
+  // Full titles for tooltips
+  const categoryFullTitles: Record<CategoryType, string> = {
     thermal: "Thermal Considerations",
     mechanical: "Mechanical Design",
     safety: "Safety Requirements",
@@ -167,47 +185,73 @@ const Guidelines: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-y-auto bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-8 font-montserrat">
       <div className="max-w-7xl mx-auto">
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-gray-800">
-              Mechanical Design Guidelines
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <h1 className="text-3xl font-bold text-[#0a0a2e] mb-8">
+          Mechanical Design Guidelines
+        </h1>
 
-        {Object.entries(categoryTitles).map(([category, title]) => (
-          <Card
-            key={category}
-            className={`mb-6 ${
-              category === "specifications" ? "mb-14" : ""
-            } border-2 ${categoryColors[category as CategoryType]}`}
-          >
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-gray-700">
-                {title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {guidelines
-                  .filter((item) => item.category === category)
-                  .map((guideline, index) => (
-                    <Alert
-                      key={index}
-                      className="flex items-center space-x-4 border bg-white"
-                    >
-                      <div className="flex-shrink-0">{guideline.icon}</div>
-                      <AlertDescription className="text-gray-700">
-                        {guideline.text}
-                      </AlertDescription>
-                    </Alert>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Tabs defaultValue="thermal" className="space-y-6">
+          <div className="bg-[#0a0a2e] rounded-lg shadow-lg">
+            <TabsList className="w-full flex justify-between bg-transparent p-1">
+              <TooltipProvider>
+                {Object.entries(categoryShortTitles).map(
+                  ([category, shortTitle]) => (
+                    <Tooltip key={category}>
+                      <TooltipTrigger>
+                        <TabsTrigger
+                          value={category}
+                          className="px-4 py-2 rounded-md text-sm font-medium 
+                          bg-blue-900/20 text-gray-300 hover:text-white hover:bg-blue-800/40
+                          data-[state=active]:bg-blue-500 data-[state=active]:text-white
+                          transition-all duration-200"
+                        >
+                          {shortTitle}
+                        </TabsTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{categoryFullTitles[category as CategoryType]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                )}
+              </TooltipProvider>
+            </TabsList>
+          </div>
+
+          {Object.entries(categoryFullTitles).map(([category]) => (
+            <TabsContent
+              key={category}
+              value={category}
+              className="mt-6 transition-all duration-300"
+            >
+              <Card
+                className={`border-2 ${
+                  categoryColors[category as CategoryType]
+                } shadow-lg`}
+              >
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {guidelines
+                      .filter((item) => item.category === category)
+                      .map((guideline, index) => (
+                        <Alert
+                          key={index}
+                          className="flex items-center space-x-4 border bg-white/90 backdrop-blur-sm
+                            hover:bg-white transition-colors duration-200"
+                        >
+                          <div className="flex-shrink-0">{guideline.icon}</div>
+                          <AlertDescription className="text-gray-700">
+                            {guideline.text}
+                          </AlertDescription>
+                        </Alert>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );
