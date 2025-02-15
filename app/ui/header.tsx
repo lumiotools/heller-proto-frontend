@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname(); // Get current route
 
   return (
     <nav className="w-full h-20 bg-[#011A2E] flex items-center justify-between px-10">
@@ -24,24 +25,38 @@ export default function Navbar() {
         className="w-28"
       />
       <div className="flex items-center gap-5">
+        {/* Dashboard Button */}
         <Button
           onClick={() => router.push("/")}
-          variant="outline"
-          className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
+          className={`px-4 py-2 rounded-md ${
+            pathname === "/"
+              ? "variant-outline text-white/90 border-white/10 bg-white/10"
+              : "text-white/90 bg-[#011A2E]"
+          }`}
         >
           Dashboard
         </Button>
+
+        {/* Guidelines Button */}
         <Button
           onClick={() => router.push("/guidelines")}
-          variant="outline"
-          className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
+          className={`px-4 py-2 rounded-md ${
+            pathname === "/guidelines"
+              ? "variant-outline text-white/90 border-white/10 bg-white/10"
+              : "text-white/90 bg-[#011A2E]"
+          }`}
         >
           Guidelines
         </Button>
+
+        {/* Collect Data Button */}
         <Button
           onClick={() => router.push("/dataCollect")}
-          variant="outline"
-          className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
+          className={`px-4 py-2 rounded-md ${
+            pathname === "/dataCollect"
+              ? "variant-outline text-white/90 border-white/10 bg-white/10"
+              : "text-white/90 bg-[#011A2E]"
+          }`}
         >
           Collect Data
         </Button>
