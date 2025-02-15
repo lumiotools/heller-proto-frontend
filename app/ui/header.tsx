@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
+
   return (
     <nav className="w-full h-20 bg-[#011A2E] flex items-center justify-between px-10">
       <div className="flex items-center gap-4">
@@ -22,18 +25,21 @@ export default function Navbar() {
       />
       <div className="flex items-center gap-5">
         <Button
+          onClick={() => router.push("/")}
           variant="outline"
           className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
         >
           Dashboard
         </Button>
         <Button
+          onClick={() => router.push("/guidelines")}
           variant="outline"
           className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
         >
           Guidelines
         </Button>
         <Button
+          onClick={() => router.push("/dataCollect")}
           variant="outline"
           className="text-white/90 border-white/10 bg-white/10 rounded-md px-4 py-2"
         >
