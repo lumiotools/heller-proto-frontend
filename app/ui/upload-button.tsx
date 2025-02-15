@@ -158,6 +158,7 @@ export default function CADUploadButton() {
       setIsLoading(false);
     }
   };
+
   return (
     <div
       className={`w-full ${
@@ -178,7 +179,7 @@ export default function CADUploadButton() {
           className={`mx-auto transition-all duration-300 ease-in-out ${
             images.length > 0 || isLoadingImages || markdownReport
               ? "w-full max-w-7xl"
-              : "w-full max-w-lg"
+              : "w-full max-w-xl"
           }`}
         >
           {/* Top Section - Upload and Images */}
@@ -191,7 +192,7 @@ export default function CADUploadButton() {
             >
               <Card className="bg-white border border-[#0000001A] h-full flex flex-col">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl text-black-900 text-center">
+                  <CardTitle className="text-2xl text-black-900 text-center">
                     CAD File Analysis
                   </CardTitle>
                 </CardHeader>
@@ -200,16 +201,20 @@ export default function CADUploadButton() {
                     <label
                       htmlFor="file-upload"
                       className={`group relative flex flex-col items-center justify-center w-full ${
-                        totalTime !== null ? "h-32" : "h-48"
+                        totalTime !== null ||
+                        images.length > 0 ||
+                        isLoadingImages
+                          ? "h-32"
+                          : "h-64"
                       } border border-[#0083BF3D] rounded-lg bg-[#0083BF0A] hover:bg-blue-50 transition-all duration-300 cursor-pointer`}
                     >
                       <div className="space-y-2 text-center">
-                        <Upload className="mx-auto h-8 w-8 text-[#0083BF]" />
-                        <div className="text-sm text-black-900">
+                        <Upload className="mx-auto h-12 w-12 text-[#0083BF]" />
+                        <div className="text-base text-black-900">
                           <span className="font-semibold">Click to upload</span>{" "}
                           or drag and drop
                         </div>
-                        <p className="text-xs text-[#0083BF]">
+                        <p className="text-sm text-[#0083BF]">
                           STEP (.step, .stp), FreeCAD ZIP (.zip, .FCStd)
                         </p>
                       </div>
@@ -255,11 +260,11 @@ export default function CADUploadButton() {
                     <Button
                       onClick={handleSubmit}
                       disabled={isLoading}
-                      className="w-full h-10 bg-[#0083BF] hover:bg-[#0083BF]/90 text-white font-semibold rounded"
+                      className="w-full h-12 bg-[#0083BF] hover:bg-[#0083BF]/90 text-white font-semibold rounded"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center gap-2">
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                          <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
                           <span>Analyzing... ({formatTime(timer)})</span>
                         </div>
                       ) : (
