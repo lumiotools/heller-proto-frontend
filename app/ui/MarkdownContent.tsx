@@ -57,7 +57,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
     <div className="relative">
       <Button
         onClick={handleDownloadPDF}
-        className="absolute top-0 right-0 bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md transition-all flex items-center gap-2"
+        className="absolute top-0 right-0 bg-[#0083BF] hover:bg-[#0083BF]/90 text-white font-semibold shadow-md transition-all flex items-center gap-2"
         aria-label="Download PDF"
       >
         <svg

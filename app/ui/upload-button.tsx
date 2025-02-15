@@ -158,35 +158,50 @@ export default function CADUploadButton() {
       setIsLoading(false);
     }
   };
-
   return (
-    <div className="w-full min-h-screen bg-white font-montserrat overflow-y-auto">
-      <div className="container mx-auto py-8 px-4 mt-10">
+    <div
+      className={`w-full ${
+        images.length > 0 || isLoadingImages || markdownReport
+          ? "min-h-[calc(100vh-4rem)] bg-[#F8FAFC]"
+          : "h-[calc(100vh-4rem)] bg-[#F8FAFC] flex items-center justify-center"
+      } font-montserrat overflow-y-auto`}
+    >
+      <div
+        className={`container ${
+          images.length > 0 || isLoadingImages || markdownReport
+            ? "py-16 px-4"
+            : "px-4"
+        }`}
+      >
         {/* Main content wrapper with conditional max-width */}
         <div
-          className={`mx-auto ${
-            images.length > 0 || isLoadingImages ? "w-full" : "max-w-3xl"
+          className={`mx-auto transition-all duration-300 ease-in-out ${
+            images.length > 0 || isLoadingImages || markdownReport
+              ? "w-full max-w-7xl"
+              : "w-full max-w-lg"
           }`}
         >
           {/* Top Section - Upload and Images */}
-          <div className="flex flex-col md:flex-row gap-6 justify-between">
+          <div className="flex flex-col md:flex-row gap-6 justify-between items-start">
             {/* Upload Section */}
             <div
               className={`w-full ${
                 images.length > 0 || isLoadingImages ? "md:w-3/5" : "w-full"
               }`}
             >
-              <Card className="bg-white border border-[#0000001A]">
+              <Card className="bg-white border border-[#0000001A] h-full flex flex-col">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-xl text-black-900 text-center">
                     CAD File Analysis
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="flex-grow flex flex-col justify-between space-y-4">
                   <div className="space-y-4">
                     <label
                       htmlFor="file-upload"
-                      className="group relative flex flex-col items-center justify-center w-full h-48 border border-[#0083BF3D] rounded-lg bg-[#0083BF0A] hover:bg-blue-50 transition-colors cursor-pointer"
+                      className={`group relative flex flex-col items-center justify-center w-full ${
+                        totalTime !== null ? "h-32" : "h-48"
+                      } border border-[#0083BF3D] rounded-lg bg-[#0083BF0A] hover:bg-blue-50 transition-all duration-300 cursor-pointer`}
                     >
                       <div className="space-y-2 text-center">
                         <Upload className="mx-auto h-8 w-8 text-[#0083BF]" />
@@ -258,17 +273,20 @@ export default function CADUploadButton() {
                         <AlertDescription>{message}</AlertDescription>
                       </Alert>
                     )}
+                    {totalTime !== null && (
+                      <Alert className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
+                        <Clock className="h-4 w-4 text-[#0083BF]" />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-[#011A2E]">
+                            Analysis Complete
+                          </span>
+                          <span className="text-sm text-[#0083BF]">
+                            Processed in {formatTime(totalTime)}
+                          </span>
+                        </div>
+                      </Alert>
+                    )}
                   </div>
-
-                  {totalTime !== null && (
-                    <Alert className="bg-blue-50 border-blue-200">
-                      <Clock className="h-4 w-4 text-[#0083BF]" />
-                      <AlertTitle>Analysis Complete</AlertTitle>
-                      <AlertDescription>
-                        Processed in {formatTime(totalTime)}
-                      </AlertDescription>
-                    </Alert>
-                  )}
                 </CardContent>
               </Card>
             </div>
@@ -276,14 +294,14 @@ export default function CADUploadButton() {
             {/* Images Section */}
             {(images.length > 0 || isLoadingImages) && (
               <div className="w-full md:w-2/5">
-                <Card className="bg-white border border-[#0000001A] h-full">
+                <Card className="bg-white border border-[#0000001A] h-full flex flex-col">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl text-black-900 flex items-center gap-2">
                       <Image className="h-5 w-5" />
                       Images
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow flex flex-col justify-between space-y-4">
                     {isLoadingImages ? (
                       <div className="flex flex-col items-center justify-center h-48 space-y-4">
                         <div className="animate-spin h-8 w-8 border-4 border-[#0083BF] border-t-transparent rounded-full" />
@@ -295,7 +313,7 @@ export default function CADUploadButton() {
                           <div key={index}>
                             <div className="rounded border border-[#0000001A] overflow-hidden">
                               <img
-                                src={image.data}
+                                src={image.data || "/placeholder.svg"}
                                 alt={originalFilename}
                                 className="w-full h-56 object-contain bg-gray-50"
                               />
@@ -313,7 +331,6 @@ export default function CADUploadButton() {
                       </div>
                     )}
                   </CardContent>
-                  {/* Card Footer with pagination */}
                   <CardFooter className="pt-2 flex items-center justify-center border-t border-[#0000001A] ">
                     <p className="text-sm font-medium text-gray-600">1 / 1</p>
                   </CardFooter>
