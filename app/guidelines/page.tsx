@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +49,7 @@ interface GuidelineItem {
 }
 
 const Guidelines: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<CategoryType>("thermal");
+  const [activeTab, setActiveTab] = useState<CategoryType>("mechanical");
 
   const guidelines: GuidelineItem[] = [
     {
@@ -186,18 +187,18 @@ const Guidelines: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-8 font-montserrat">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-7xl mx-auto px-8 py-12">
+        <h1 className="text-[#0A1929] text-3xl font-semibold mb-8">
           Mechanical Design Guidelines
         </h1>
 
         <Tabs
-          defaultValue="thermal"
+          defaultValue="mechanical"
           className="space-y-6"
           onValueChange={(value) => setActiveTab(value as CategoryType)}
         >
-          <TabsList className="w-full flex justify-start bg-transparent h-auto py-4 space-x-4">
+          <TabsList className="w-full flex justify-start bg-transparent h-auto space-x-4 p-0">
             <TooltipProvider>
               {Object.entries(categoryShortTitles).map(
                 ([category, shortTitle]) => (
@@ -205,12 +206,11 @@ const Guidelines: React.FC = () => {
                     <TooltipTrigger asChild>
                       <TabsTrigger
                         value={category}
-                        className={`px-6 py-2.5 rounded-lg text-base font-medium flex-1
-                        transition-all duration-200
+                        className={`px-8 py-3 rounded-md text-sm font-medium transition-colors
                         ${
                           category === activeTab
-                            ? "bg-[#392E7B] text-white shadow-none"
-                            : "bg-white text-gray-600 shadow-sm border border-gray-100"
+                            ? "bg-[#1E3A57] text-white"
+                            : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
                         }`}
                       >
                         {shortTitle}
@@ -231,13 +231,9 @@ const Guidelines: React.FC = () => {
               value={category}
               className="mt-6 transition-all duration-300"
             >
-              <Card
-                className={`border ${
-                  categoryColors[category as CategoryType]
-                } shadow-sm`}
-              >
-                <CardContent className="py-6 px-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6 px-4">
+              <Card className="border border-[#1E3A57]/10 shadow-sm">
+                <CardContent className="p-8">
+                  <h2 className="text-xl text-[#0A1929] font-semibold mb-6">
                     {fullTitle}
                   </h2>
                   <div className="space-y-3">
@@ -246,11 +242,10 @@ const Guidelines: React.FC = () => {
                       .map((guideline, index) => (
                         <Alert
                           key={index}
-                          className="flex items-center gap-4 border bg-white 
-                            hover:bg-gray-50 transition-colors duration-200"
+                          className="flex items-center gap-4 bg-white border-[#1E3A57]/10 hover:bg-gray-50 transition-colors duration-200"
                         >
                           <div className="flex-shrink-0">{guideline.icon}</div>
-                          <AlertDescription className="text-gray-700">
+                          <AlertDescription className="text-gray-700 py-1">
                             {guideline.text}
                           </AlertDescription>
                         </Alert>
@@ -261,7 +256,7 @@ const Guidelines: React.FC = () => {
             </TabsContent>
           ))}
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 };

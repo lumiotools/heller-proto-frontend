@@ -6,12 +6,12 @@ import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
-  const pathname = usePathname(); // Get current route
+  const pathname = usePathname();
 
   return (
     <nav className="w-full h-20 bg-[#011A2E] flex items-center justify-between px-10">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-white/10 rounded-lg flex justify-center items-center">
+        <div className="w-12 h-12 bg-white/10 rounded-lg flex justify-center items-center hover:bg-white/20 transition-colors duration-200">
           <Mic className="text-white w-6 h-6" />
         </div>
         <div>
@@ -28,11 +28,12 @@ export default function Navbar() {
         {/* Dashboard Button */}
         <Button
           onClick={() => router.push("/")}
-          className={`px-4 py-2 rounded-md ${
-            pathname === "/"
-              ? "variant-outline text-white/90 border-white/10 bg-white/10"
-              : "text-white/90 bg-[#011A2E]"
-          }`}
+          className={`px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 
+            ${
+              pathname === "/"
+                ? "text-white/90 border-white/10 bg-white/10 hover:bg-white/20"
+                : "text-white/90 bg-[#011A2E] hover:bg-white/10"
+            }`}
         >
           Dashboard
         </Button>
@@ -40,11 +41,12 @@ export default function Navbar() {
         {/* Guidelines Button */}
         <Button
           onClick={() => router.push("/guidelines")}
-          className={`px-4 py-2 rounded-md ${
-            pathname === "/guidelines"
-              ? "variant-outline text-white/90 border-white/10 bg-white/10"
-              : "text-white/90 bg-[#011A2E]"
-          }`}
+          className={`px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 
+            ${
+              pathname === "/guidelines"
+                ? "text-white/90 border-white/10 bg-white/10 hover:bg-white/20"
+                : "text-white/90 bg-[#011A2E] hover:bg-white/10"
+            }`}
         >
           Guidelines
         </Button>
@@ -52,11 +54,12 @@ export default function Navbar() {
         {/* Collect Data Button */}
         <Button
           onClick={() => router.push("/dataCollect")}
-          className={`px-4 py-2 rounded-md ${
-            pathname === "/dataCollect"
-              ? "variant-outline text-white/90 border-white/10 bg-white/10"
-              : "text-white/90 bg-[#011A2E]"
-          }`}
+          className={`px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 
+            ${
+              pathname === "/dataCollect"
+                ? "text-white/90 border-white/10 bg-white/10 hover:bg-white/20"
+                : "text-white/90 bg-[#011A2E] hover:bg-white/10"
+            }`}
         >
           Collect Data
         </Button>
