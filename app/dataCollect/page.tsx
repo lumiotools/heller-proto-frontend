@@ -1,16 +1,18 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Mic,
-  Square,
   RotateCcw,
   Play,
   Send,
   CheckCircle2,
   Upload,
+  Pause,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -51,7 +53,6 @@ export default function RecordingPage() {
         });
         setRecordedAudio(audioBlob);
 
-        // Revoke the previous URL to avoid memory leaks
         if (audioUrl) {
           URL.revokeObjectURL(audioUrl);
         }
@@ -106,7 +107,6 @@ export default function RecordingPage() {
     setTranscript("");
     setIsFinished(false);
 
-    // Clean up audio URL
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl("");
@@ -143,6 +143,7 @@ export default function RecordingPage() {
       alert("Failed to transcribe audio. Please try again.");
     }
   };
+
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -164,14 +165,15 @@ export default function RecordingPage() {
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
   };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-purple-50 p-4 md:p-8">
+    <div className="min-h-screen bg-[#011A2E05] p-4 md:p-8">
       <Card className="max-w-3xl mx-auto bg-white shadow-lg">
         <CardContent className="p-8">
           <div className="space-y-8">
             {!transcript && (
               <div className="text-center space-y-4">
-                <h1 className="text-3xl font-bold text-purple-800">
+                <h1 className="text-3xl font-bold text-[#011A2ECC]">
                   Share Your Knowledge
                 </h1>
                 <p className="text-xl text-gray-600">
@@ -203,18 +205,33 @@ export default function RecordingPage() {
                             : pauseRecording
                           : startRecording
                       }
-                      variant={isRecording ? "destructive" : "default"}
+                      variant="outline"
                       size="lg"
-                      className="w-20 h-20 rounded-full bg-purple-600 hover:bg-purple-700"
+                      className={`w-24 h-24 rounded-full border-2 flex flex-col items-center justify-center transition-colors ${
+                        isRecording
+                          ? isPaused
+                            ? "border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                            : "border-red-500 text-red-500 hover:bg-red-50"
+                          : "border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10]"
+                      }`}
                     >
                       {isRecording ? (
                         isPaused ? (
-                          <Play className="h-8 w-8 text-white" />
+                          <>
+                            <Play className="h-8 w-8" />
+                            <span className="text-xs mt-1">Resume</span>
+                          </>
                         ) : (
-                          <Square className="h-8 w-8 text-white" />
+                          <>
+                            <Pause className="h-8 w-8" />
+                            <span className="text-xs mt-1">Pause</span>
+                          </>
                         )
                       ) : (
-                        <Mic className="h-8 w-8 text-white" />
+                        <>
+                          <Mic className="h-8 w-8" />
+                          <span className="text-xs mt-1">Record</span>
+                        </>
                       )}
                     </Button>
 
@@ -222,9 +239,10 @@ export default function RecordingPage() {
                       onClick={triggerFileUpload}
                       variant="outline"
                       size="lg"
-                      className="w-20 h-20 rounded-full border-2 border-purple-600"
+                      className="w-24 h-24 rounded-full border-2 border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10] flex flex-col items-center justify-center"
                     >
-                      <Upload className="h-8 w-8 text-purple-600" />
+                      <Upload className="h-8 w-8" />
+                      <span className="text-xs mt-1">Upload</span>
                     </Button>
 
                     <input
@@ -238,11 +256,12 @@ export default function RecordingPage() {
                     {isRecording && (
                       <Button
                         onClick={finishRecording}
-                        variant="default"
+                        variant="outline"
                         size="lg"
-                        className="w-20 h-20 rounded-full bg-green-600 hover:bg-green-700"
+                        className="w-24 h-24 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-50 flex flex-col items-center justify-center"
                       >
-                        <CheckCircle2 className="h-8 w-8 text-white" />
+                        <CheckCircle2 className="h-8 w-8" />
+                        <span className="text-xs mt-1">Finish</span>
                       </Button>
                     )}
                   </>
@@ -252,33 +271,36 @@ export default function RecordingPage() {
                       onClick={resetRecording}
                       variant="outline"
                       size="lg"
-                      className="w-20 h-20 rounded-full border-2 border-red-600"
+                      className="w-24 h-24 rounded-full border-2 border-red-500 text-red-500 hover:bg-red-50 flex flex-col items-center justify-center"
                     >
-                      <RotateCcw className="h-8 w-8 text-red-600" />
+                      <RotateCcw className="h-8 w-8" />
+                      <span className="text-xs mt-1">Redo</span>
                     </Button>
                     <Button
                       onClick={sendRecording}
-                      variant="default"
+                      variant="outline"
                       size="lg"
-                      className="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700"
+                      className="w-24 h-24 rounded-full border-2 border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10] flex flex-col items-center justify-center"
                     >
-                      <Send className="h-8 w-8 text-white" />
+                      <Send className="h-8 w-8" />
+                      <span className="text-xs mt-1">Send</span>
                     </Button>
                   </>
                 )}
               </div>
 
               {isRecording && !isFinished && (
-                <p className="text-xl text-purple-600 font-medium">
+                <p className="text-lg text-[#011A2ECC] font-medium">
                   {isPaused
-                    ? "Recording paused. Click to resume."
-                    : "Recording... Click square to pause or checkmark to finish."}
+                    ? "Recording paused. Click 'Resume' to continue."
+                    : "Recording in progress. Click 'Pause' to pause or 'Finish' when done."}
                 </p>
               )}
 
               {isFinished && !transcript && (
-                <p className="text-xl text-purple-600 font-medium">
-                  Listen to your recording above, then send or redo if needed.
+                <p className="text-lg text-[#011A2ECC] font-medium">
+                  Your recording is ready! Listen above, then click
+                  &apos;Send&apos; to transcribe or &apos;Redo&apos; if needed.
                 </p>
               )}
 
@@ -287,9 +309,9 @@ export default function RecordingPage() {
                   <div className="flex items-center justify-end space-x-2">
                     <Label
                       htmlFor="show-transcript"
-                      className="text-lg text-gray-700"
+                      className="text-lg text-[#011A2ECC]"
                     >
-                      Show Transcript
+                      Show Full Transcript
                     </Label>
                     <Switch
                       id="show-transcript"
@@ -298,11 +320,11 @@ export default function RecordingPage() {
                     />
                   </div>
 
-                  <div className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-sm">
-                    <h2 className="text-2xl font-semibold text-purple-800 mb-4">
-                      {showTranscript ? "Transcript" : "Summary"}
+                  <div className="p-6 bg-[#011A2E10] rounded-lg shadow-sm">
+                    <h2 className="text-2xl font-semibold text-[#011A2ECC] mb-4">
+                      {showTranscript ? "Full Transcript" : "Summary"}
                     </h2>
-                    <p className="text-xl leading-relaxed text-gray-700">
+                    <p className="text-lg leading-relaxed text-[#011A2ECC]">
                       {showTranscript ? transcript : summary}
                     </p>
                   </div>
