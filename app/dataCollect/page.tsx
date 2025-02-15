@@ -1,339 +1,330 @@
 "use client";
 
-import type React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Mic, Square, RotateCcw, Play, Send } from "lucide-react";
 
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Mic,
-  RotateCcw,
-  Play,
-  Send,
-  CheckCircle2,
-  Upload,
-  Pause,
-} from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+const DEEPGRAM_API_KEY = "b101a134c90784b873eb62c3671012ae74013c9d";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+interface Message {
+  text: string;
+  isAI: boolean;
+}
 
-export default function RecordingPage() {
+interface QAPair {
+  question: string;
+  answer: string;
+}
+
+interface AnalyzeResponse {
+  found_question?: string;
+  found_answer?: string;
+  next_question?: string;
+  completed: boolean;
+  previous_qa: QAPair[];
+}
+
+export default function AudioChat() {
+  const [messages, setMessages] = useState<Message[]>([
+    { text: "Hi Hope you're well. Let's get started", isAI: true },
+  ]);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isFinished, setIsFinished] = useState(false);
-  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string>("");
-  const [transcript, setTranscript] = useState<string>("");
-  const [summary, setSummary] = useState("");
-  const [showTranscript, setShowTranscript] = useState(true);
+  const [currentTranscript, setCurrentTranscript] = useState("");
+  const [previousQA, setPreviousQA] = useState<QAPair[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const webSocketRef = useRef<WebSocket | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+        },
+      });
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+      streamRef.current = stream;
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/mp4",
+      const socket = new WebSocket(
+        "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000",
+        ["token", DEEPGRAM_API_KEY]
+      );
+
+      webSocketRef.current = socket;
+
+      socket.onopen = () => {
+        const audioContext = new AudioContext({
+          sampleRate: 16000,
         });
-        setRecordedAudio(audioBlob);
+        audioContextRef.current = audioContext;
 
-        if (audioUrl) {
-          URL.revokeObjectURL(audioUrl);
-        }
+        const source = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(2048, 1, 1);
+        processorRef.current = processor;
 
-        const newAudioUrl = URL.createObjectURL(audioBlob);
-        setAudioUrl(newAudioUrl);
+        source.connect(processor);
+        processor.connect(audioContext.destination);
 
-        if (audioRef.current) {
-          audioRef.current.src = newAudioUrl;
-          audioRef.current.load();
+        processor.onaudioprocess = (e: AudioProcessingEvent) => {
+          if (socket.readyState === WebSocket.OPEN && !isPaused) {
+            const inputData = e.inputBuffer.getChannelData(0);
+            const pcmData = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+              pcmData[i] = Math.min(1, inputData[i]) * 0x7fff;
+            }
+            socket.send(pcmData.buffer);
+          }
+        };
+      };
+
+      socket.onmessage = (event: MessageEvent) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "Results") {
+          const transcript = data.channel?.alternatives[0]?.transcript;
+          if (transcript && transcript.trim()) {
+            setCurrentTranscript((prev) => {
+              const newTranscript = prev + " " + transcript;
+              return newTranscript.trim();
+            });
+          }
         }
       };
 
-      mediaRecorder.start();
+      socket.onerror = (error: Event) => {
+        console.error("WebSocket Error:", error);
+      };
+
+      socket.onclose = () => {
+        console.log("WebSocket closed");
+      };
+
       setIsRecording(true);
       setIsPaused(false);
-      setIsFinished(false);
-    } catch (error: unknown) {
-      console.error("Microphone access error:", error);
-      alert("Could not access microphone. Please check permissions.");
+    } catch (err) {
+      console.error("Error starting recording:", err);
     }
   };
 
   const pauseRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.pause();
-      setIsPaused(true);
-    }
+    setIsPaused(true);
   };
 
   const resumeRecording = () => {
-    if (mediaRecorderRef.current && isPaused) {
-      mediaRecorderRef.current.resume();
-      setIsPaused(false);
-    }
+    setIsPaused(false);
   };
 
-  const finishRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream
-        .getTracks()
-        .forEach((track) => track.stop());
-      setIsRecording(false);
-      setIsPaused(false);
-      setIsFinished(true);
+  const stopRecording = () => {
+    if (processorRef.current) {
+      processorRef.current.disconnect();
     }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+    if (webSocketRef.current) {
+      webSocketRef.current.close();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    setIsRecording(false);
+    setIsPaused(false);
   };
 
-  const resetRecording = () => {
-    setRecordedAudio(null);
-    setTranscript("");
-    setIsFinished(false);
-
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl("");
-    }
-
-    if (audioRef.current) {
-      audioRef.current.src = "";
-      audioRef.current.load();
-    }
+  const redoRecording = () => {
+    stopRecording();
+    setCurrentTranscript("");
   };
 
-  const sendRecording = async () => {
-    if (!recordedAudio) return;
+  const submitTranscript = async () => {
+    if (currentTranscript.trim() && !isCompleted) {
+      try {
+        setIsLoading(true);
+        const finalTranscript = currentTranscript.trim();
 
-    const formData = new FormData();
-    formData.append("file", recordedAudio, "audio.mp4");
+        setMessages((prev) => [
+          ...prev,
+          { text: finalTranscript, isAI: false },
+        ]);
 
-    try {
-      const response = await fetch(`${API_URL}/data/transcribe/`, {
-        method: "POST",
-        body: formData,
-      });
+        const response = await fetch(
+          `${API_BASE_URL}/data2/analyze-transcript`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              transcript: finalTranscript,
+              previous_qa: previousQA,
+            }),
+          }
+        );
 
-      const data = await response.json();
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
 
-      if (data.status === "success") {
-        setTranscript(data.data.transcript);
-        setSummary(data.data.summary);
-      } else {
-        throw new Error("Transcription failed");
+        const data: AnalyzeResponse = await response.json();
+
+        if (data.found_question && data.found_answer) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              text: `Found an answer!\n\nQuestion: ${data.found_question}\nAnswer: ${data.found_answer}`,
+              isAI: true,
+            },
+          ]);
+          setPreviousQA(data.previous_qa);
+        }
+
+        if (data.next_question) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              text: `Now, please tell me about:\n\n${data.next_question}`,
+              isAI: true,
+            },
+          ]);
+        } else if (!data.completed) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              text: "I couldn't find an answer in that transcript. Please try answering any of the remaining questions.",
+              isAI: true,
+            },
+          ]);
+        }
+
+        setIsCompleted(data.completed);
+        if (data.completed) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              text: "Great! All questions have been answered. Thank you for your participation!",
+              isAI: true,
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error submitting transcript:", error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Sorry, there was an error analyzing your response. Please try again.",
+            isAI: true,
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+        setCurrentTranscript("");
+        stopRecording();
       }
-    } catch (error: unknown) {
-      console.error("Transcription error:", error);
-      alert("Failed to transcribe audio. Please try again.");
     }
   };
 
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      setRecordedAudio(file);
-      const newAudioUrl = URL.createObjectURL(file);
-      setAudioUrl(newAudioUrl);
-      setIsFinished(true);
-
-      if (audioRef.current) {
-        audioRef.current.src = newAudioUrl;
-        audioRef.current.load();
+  useEffect(() => {
+    return () => {
+      if (processorRef.current) {
+        processorRef.current.disconnect();
       }
-    }
-  };
-
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+      if (webSocketRef.current) {
+        webSocketRef.current.close();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#011A2E05] p-4 md:p-8">
-      <Card className="max-w-3xl mx-auto bg-white shadow-lg">
-        <CardContent className="p-8">
-          <div className="space-y-8">
-            {!transcript && (
-              <div className="text-center space-y-4">
-                <h1 className="text-3xl font-bold text-[#011A2ECC]">
-                  Share Your Knowledge
-                </h1>
-                <p className="text-xl text-gray-600">
-                  Record or upload your voice message below
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col items-center space-y-6">
-              {isFinished && recordedAudio && (
-                <div className="w-full max-w-md">
-                  <audio
-                    ref={audioRef}
-                    controls
-                    className="w-full mb-4"
-                    src={audioUrl}
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center justify-center space-x-6">
-                {!isFinished ? (
-                  <>
-                    <Button
-                      onClick={
-                        isRecording
-                          ? isPaused
-                            ? resumeRecording
-                            : pauseRecording
-                          : startRecording
-                      }
-                      variant="outline"
-                      size="lg"
-                      className={`w-24 h-24 rounded-full border-2 flex flex-col items-center justify-center transition-colors ${
-                        isRecording
-                          ? isPaused
-                            ? "border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                            : "border-red-500 text-red-500 hover:bg-red-50"
-                          : "border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10]"
-                      }`}
-                    >
-                      {isRecording ? (
-                        isPaused ? (
-                          <>
-                            <Play className="h-8 w-8" />
-                            <span className="text-xs mt-1">Resume</span>
-                          </>
-                        ) : (
-                          <>
-                            <Pause className="h-8 w-8" />
-                            <span className="text-xs mt-1">Pause</span>
-                          </>
-                        )
-                      ) : (
-                        <>
-                          <Mic className="h-8 w-8" />
-                          <span className="text-xs mt-1">Record</span>
-                        </>
-                      )}
-                    </Button>
-
-                    <Button
-                      onClick={triggerFileUpload}
-                      variant="outline"
-                      size="lg"
-                      className="w-24 h-24 rounded-full border-2 border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10] flex flex-col items-center justify-center"
-                    >
-                      <Upload className="h-8 w-8" />
-                      <span className="text-xs mt-1">Upload</span>
-                    </Button>
-
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileUpload}
-                      accept="audio/*"
-                      className="hidden"
-                    />
-
-                    {isRecording && (
-                      <Button
-                        onClick={finishRecording}
-                        variant="outline"
-                        size="lg"
-                        className="w-24 h-24 rounded-full border-2 border-green-500 text-green-500 hover:bg-green-50 flex flex-col items-center justify-center"
-                      >
-                        <CheckCircle2 className="h-8 w-8" />
-                        <span className="text-xs mt-1">Finish</span>
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      onClick={resetRecording}
-                      variant="outline"
-                      size="lg"
-                      className="w-24 h-24 rounded-full border-2 border-red-500 text-red-500 hover:bg-red-50 flex flex-col items-center justify-center"
-                    >
-                      <RotateCcw className="h-8 w-8" />
-                      <span className="text-xs mt-1">Redo</span>
-                    </Button>
-                    <Button
-                      onClick={sendRecording}
-                      variant="outline"
-                      size="lg"
-                      className="w-24 h-24 rounded-full border-2 border-[#011A2ECC] text-[#011A2ECC] hover:bg-[#011A2E10] flex flex-col items-center justify-center"
-                    >
-                      <Send className="h-8 w-8" />
-                      <span className="text-xs mt-1">Send</span>
-                    </Button>
-                  </>
-                )}
-              </div>
-
-              {isRecording && !isFinished && (
-                <p className="text-lg text-[#011A2ECC] font-medium">
-                  {isPaused
-                    ? "Recording paused. Click 'Resume' to continue."
-                    : "Recording in progress. Click 'Pause' to pause or 'Finish' when done."}
-                </p>
-              )}
-
-              {isFinished && !transcript && (
-                <p className="text-lg text-[#011A2ECC] font-medium">
-                  Your recording is ready! Listen above, then click
-                  &apos;Send&apos; to transcribe or &apos;Redo&apos; if needed.
-                </p>
-              )}
-
-              {(transcript || summary) && (
-                <div className="w-full space-y-4">
-                  <div className="flex items-center justify-end space-x-2">
-                    <Label
-                      htmlFor="show-transcript"
-                      className="text-lg text-[#011A2ECC]"
-                    >
-                      Show Full Transcript
-                    </Label>
-                    <Switch
-                      id="show-transcript"
-                      checked={showTranscript}
-                      onCheckedChange={setShowTranscript}
-                    />
-                  </div>
-
-                  <div className="p-6 bg-[#011A2E10] rounded-lg shadow-sm">
-                    <h2 className="text-2xl font-semibold text-[#011A2ECC] mb-4">
-                      {showTranscript ? "Full Transcript" : "Summary"}
-                    </h2>
-                    <p className="text-lg leading-relaxed text-[#011A2ECC]">
-                      {showTranscript ? transcript : summary}
-                    </p>
-                  </div>
-                </div>
-              )}
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto p-4 bg-gray-50 overflow-y-auto">
+      <div className="flex-1 space-y-4 overflow-y-auto">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`flex ${message.isAI ? "justify-start" : "justify-end"}`}
+          >
+            <div
+              className={`rounded-lg p-3 max-w-[80%] ${
+                message.isAI
+                  ? "bg-[#011A2E05] text-gray-800"
+                  : "bg-[#011A2ECC] text-white"
+              }`}
+            >
+              {message.text}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+        {currentTranscript && (
+          <div className="flex justify-end">
+            <div className="bg-[#011A2ECC] text-white rounded-lg p-3 max-w-[80%] opacity-70">
+              {currentTranscript}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-center space-x-4 p-4 border-t mt-4">
+        {isCompleted ? (
+          <div className="text-green-600 font-medium">
+            All questions answered! Thank you for your participation.
+          </div>
+        ) : !isRecording ? (
+          <button
+            onClick={startRecording}
+            className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+            disabled={isLoading}
+          >
+            <Mic className="w-6 h-6" />
+          </button>
+        ) : (
+          <>
+            {!isPaused ? (
+              <button
+                onClick={pauseRecording}
+                className="p-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:bg-gray-400"
+                disabled={isLoading}
+              >
+                <Square className="w-6 h-6" />
+              </button>
+            ) : (
+              <button
+                onClick={resumeRecording}
+                className="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400"
+                disabled={isLoading}
+              >
+                <Play className="w-6 h-6" />
+              </button>
+            )}
+
+            <button
+              onClick={redoRecording}
+              className="p-3 bg-yellow-600 text-white rounded-full hover:bg-yellow-700 transition-colors disabled:bg-gray-400"
+              disabled={isLoading}
+            >
+              <RotateCcw className="w-6 h-6" />
+            </button>
+
+            <button
+              onClick={submitTranscript}
+              className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-400"
+              disabled={isLoading || !currentTranscript.trim()}
+            >
+              <Send className="w-6 h-6" />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
