@@ -27,12 +27,8 @@ interface VapiMessage {
   type: string;
   transcript?: string;
   speech?: string;
-}
-
-interface Subtitle {
-  text: string;
-  timestamp: number;
-  speaker: "ai" | "user";
+  role?: string;
+  transcriptType?: string;
 }
 
 // Declare global window type
@@ -78,19 +74,15 @@ class Particle {
   }
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 const Page = () => {
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [aiState, setAiState] = useState<AIState>("idle");
-  const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
+  const [analysisQuestions, setAnalysisQuestions] = useState<string[]>([]);
+  const transcriptRef = useRef<string>("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const subtitlesRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll effect for subtitles
-  useEffect(() => {
-    if (subtitlesRef.current) {
-      subtitlesRef.current.scrollTop = subtitlesRef.current.scrollHeight;
-    }
-  }, [subtitles]);
+  const logIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let vapiInstance: VapiInstance | null = null;
@@ -118,30 +110,62 @@ const Page = () => {
       vapiInstance.on("call-start", () => {
         setCallStatus("active");
         setAiState("active");
+        transcriptRef.current = "";
+
+        // Set up logging interval
+        logIntervalRef.current = setInterval(async () => {
+          if (transcriptRef.current.length > 0) {
+            console.log("Current Transcript:", transcriptRef.current);
+            try {
+              const response = await fetch(
+                `${API_URL}/data3/analyze-transcript`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ transcript: transcriptRef.current }),
+                }
+              );
+
+              const data = await response.json();
+              console.log("Analysis Response:", data);
+              if (data.answered_questions) {
+                const questionList = data.answered_questions
+                  .split("\\n\\n")
+                  .filter((q: string) => q.trim().length > 0);
+                setAnalysisQuestions(questionList);
+              }
+            } catch (error) {
+              console.error("Error sending transcript to API:", error);
+            }
+          }
+        }, 30000);
       });
+
       vapiInstance.on("call-end", () => {
         setCallStatus("idle");
         setAiState("idle");
-        setSubtitles([]);
+
+        if (logIntervalRef.current) {
+          clearInterval(logIntervalRef.current);
+          logIntervalRef.current = null;
+        }
+        transcriptRef.current = "";
       });
+
       vapiInstance.on("message", (message?: VapiMessage) => {
+        console.log("message ", message);
         if (message?.type === "transcript" && message.transcript) {
           setAiState("listening");
-          setSubtitles((prev) => [
-            ...prev,
-            {
-              text: message.transcript!,
-              timestamp: Date.now(),
-              speaker: "user",
-            },
-          ]);
+          // Only append transcript when role is user
+          if (message.role === "user") {
+            transcriptRef.current += message.transcript;
+          }
           setTimeout(() => setAiState("active"), 1000);
         } else if (message?.type === "speech" && message.speech) {
           setAiState("speaking");
-          setSubtitles((prev) => [
-            ...prev,
-            { text: message.speech!, timestamp: Date.now(), speaker: "ai" },
-          ]);
+          transcriptRef.current += "\nAI: " + message.speech;
         }
       });
     };
@@ -150,7 +174,6 @@ const Page = () => {
 
     return () => {
       script.removeEventListener("load", handleScriptLoad);
-
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
@@ -269,21 +292,24 @@ const Page = () => {
         <p className="text-lg text-gray-400">Share your knowledge with us</p>
       </div>
 
-      {callStatus === "active" && (
-        <div
-          ref={subtitlesRef}
-          className="w-full max-w-2xl h-48 overflow-y-auto bg-gray-800 bg-opacity-50 rounded-lg p-4 space-y-2 scroll-smooth"
-        >
-          {subtitles.map((subtitle, index) => (
-            <div
-              key={`${subtitle.timestamp}-${index}`}
-              className={`p-2 rounded-lg ${
-                subtitle.speaker === "ai" ? "bg-cyan-500" : "bg-blue-500"
-              } bg-opacity-50 text-center`}
-            >
-              {subtitle.text}
+      {/* Analysis Questions Display */}
+      {analysisQuestions.length > 0 && (
+        <div className="w-full max-w-2xl mt-8">
+          <div className="bg-gray-800 rounded-lg p-4 h-64 overflow-y-auto">
+            <h2 className="text-xl font-semibold text-cyan-300 mb-4">
+              Analysis Results
+            </h2>
+            <div className="space-y-4">
+              {analysisQuestions.map((question, index) => (
+                <div
+                  key={index}
+                  className="p-3 bg-gray-700 rounded-lg text-white"
+                >
+                  {question}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>
