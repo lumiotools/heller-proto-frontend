@@ -50,6 +50,7 @@ const Page = () => {
   const [userTranscript, setUserTranscript] = useState<string>("");
   const transcriptRef = useRef<string>("");
   const logIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     let vapiInstance: VapiInstance | null = null;
@@ -92,6 +93,8 @@ const Page = () => {
       vapiInstance.on("call-start", () => {
         setCallStatus("active");
         setAiState("active");
+        setIsLoading(false);
+
         transcriptRef.current = "";
 
         // Set up logging interval
@@ -128,6 +131,7 @@ const Page = () => {
       vapiInstance.on("call-end", () => {
         setCallStatus("idle");
         setAiState("idle");
+        setIsLoading(false);
 
         if (logIntervalRef.current) {
           clearInterval(logIntervalRef.current);
@@ -169,15 +173,20 @@ const Page = () => {
   }, [callStatus]);
 
   const handleStartClick = () => {
+    setIsLoading(true);
+
     if (vapiButtonRef.current) {
       vapiButtonRef.current.click();
     }
   };
 
   const handleEndClick = () => {
-    if (vapiButtonRef.current) {
-      vapiButtonRef.current.click();
-    }
+    setIsLoading(true);
+    setTimeout(() => {
+      if (vapiButtonRef.current) {
+        vapiButtonRef.current.click();
+      }
+    }, 400);
   };
 
   const handleResetClick = () => {
@@ -220,21 +229,24 @@ const Page = () => {
           <Button
             onClick={handleStartClick}
             className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+            disabled={isLoading}
           >
-            Start Heller Talk
+            {isLoading ? "Starting..." : "Start Heller Talk"}
           </Button>
         ) : (
           <>
             <Button
               onClick={handleEndClick}
               className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+              disabled={isLoading}
             >
-              End Heller Talk
+              {isLoading ? "Ending..." : "End Heller Talk"}
             </Button>
             <Button
               onClick={handleResetClick}
               variant="outline"
               className="border-[#0083BF] text-[#0083BF] hover:bg-[#0083BF]/10"
+              disabled={isLoading}
             >
               Reset Heller Talk
             </Button>
