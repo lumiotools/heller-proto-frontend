@@ -125,7 +125,7 @@ const Page = () => {
               console.error("Error sending transcript to API:", error);
             }
           }
-        }, 10000);
+        }, 30000);
       });
 
       vapiInstance.on("call-end", () => {
