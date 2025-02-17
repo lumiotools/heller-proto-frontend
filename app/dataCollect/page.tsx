@@ -26,6 +26,13 @@ interface VapiInstance {
 interface VapiMessage {
   type: string;
   transcript?: string;
+  speech?: string;
+}
+
+interface Subtitle {
+  text: string;
+  timestamp: number;
+  speaker: "ai" | "user";
 }
 
 // Declare global window type
@@ -74,7 +81,16 @@ class Particle {
 const Page = () => {
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [aiState, setAiState] = useState<AIState>("idle");
+  const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const subtitlesRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll effect for subtitles
+  useEffect(() => {
+    if (subtitlesRef.current) {
+      subtitlesRef.current.scrollTop = subtitlesRef.current.scrollHeight;
+    }
+  }, [subtitles]);
 
   useEffect(() => {
     let vapiInstance: VapiInstance | null = null;
@@ -106,11 +122,26 @@ const Page = () => {
       vapiInstance.on("call-end", () => {
         setCallStatus("idle");
         setAiState("idle");
+        setSubtitles([]);
       });
       vapiInstance.on("message", (message?: VapiMessage) => {
         if (message?.type === "transcript" && message.transcript) {
           setAiState("listening");
+          setSubtitles((prev) => [
+            ...prev,
+            {
+              text: message.transcript!,
+              timestamp: Date.now(),
+              speaker: "user",
+            },
+          ]);
           setTimeout(() => setAiState("active"), 1000);
+        } else if (message?.type === "speech" && message.speech) {
+          setAiState("speaking");
+          setSubtitles((prev) => [
+            ...prev,
+            { text: message.speech!, timestamp: Date.now(), speaker: "ai" },
+          ]);
         }
       });
     };
@@ -119,7 +150,9 @@ const Page = () => {
 
     return () => {
       script.removeEventListener("load", handleScriptLoad);
-      document.body.removeChild(script);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, []);
 
@@ -142,12 +175,10 @@ const Page = () => {
 
     const animateParticles = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       particles.forEach((particle) => {
         particle.update();
         particle.draw(ctx);
       });
-
       animationFrameId = requestAnimationFrame(animateParticles);
     };
 
@@ -163,7 +194,7 @@ const Page = () => {
     const colors = {
       speaking: "bg-green-400",
       listening: "bg-blue-400",
-      active: "bg-cyan-400",
+      active: "bg-yellow-400",
       idle: "bg-gray-400",
     };
     return colors[aiState];
@@ -216,7 +247,7 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="text-center space-y-4">
+      <div className="text-center space-y-4 mb-8">
         <p className="text-2xl font-medium text-cyan-200">
           {callStatus === "idle" && "Heller AI is ready"}
           {callStatus === "active" &&
@@ -231,6 +262,24 @@ const Page = () => {
         </p>
         <p className="text-lg text-gray-400">Share your knowledge with us</p>
       </div>
+
+      {callStatus === "active" && (
+        <div
+          ref={subtitlesRef}
+          className="w-full max-w-2xl h-48 overflow-y-auto bg-gray-800 bg-opacity-50 rounded-lg p-4 space-y-2 scroll-smooth"
+        >
+          {subtitles.map((subtitle, index) => (
+            <div
+              key={`${subtitle.timestamp}-${index}`}
+              className={`p-2 rounded-lg ${
+                subtitle.speaker === "ai" ? "bg-cyan-500" : "bg-blue-500"
+              } bg-opacity-50 text-center`}
+            >
+              {subtitle.text}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
