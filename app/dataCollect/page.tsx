@@ -1,330 +1,238 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Mic, Square, RotateCcw, Play, Send } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Mic, Speaker } from "lucide-react";
 
-const DEEPGRAM_API_KEY = "b101a134c90784b873eb62c3671012ae74013c9d";
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Types
+type CallStatus = "idle" | "active";
+type AIState = "idle" | "speaking" | "listening" | "active";
 
-interface Message {
-  text: string;
-  isAI: boolean;
+interface VapiSDK {
+  run: (config: VapiConfig) => VapiInstance;
 }
 
-interface QAPair {
-  question: string;
-  answer: string;
+interface VapiConfig {
+  apiKey: string;
+  assistant: string;
+  dailyConfig: {
+    dailyJsVersion: string;
+  };
 }
 
-interface AnalyzeResponse {
-  found_question?: string;
-  found_answer?: string;
-  next_question?: string;
-  completed: boolean;
-  previous_qa: QAPair[];
+interface VapiInstance {
+  on: (event: string, callback: (message?: VapiMessage) => void) => void;
 }
 
-export default function AudioChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { text: "Hi Hope you're well. Let's get started", isAI: true },
-  ]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentTranscript, setCurrentTranscript] = useState("");
-  const [previousQA, setPreviousQA] = useState<QAPair[]>([]);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+interface VapiMessage {
+  type: string;
+  transcript?: string;
+}
 
-  // const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const webSocketRef = useRef<WebSocket | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+// Declare global window type
+declare global {
+  interface Window {
+    vapiSDK: VapiSDK;
+  }
+}
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          sampleRate: 16000,
+class Particle {
+  x: number;
+  y: number;
+  size: number;
+  speedX: number;
+  speedY: number;
+  canvasWidth: number;
+  canvasHeight: number;
+
+  constructor(canvasWidth: number, canvasHeight: number) {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
+    this.x = Math.random() * canvasWidth;
+    this.y = Math.random() * canvasHeight;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = Math.random() * 1 - 0.5;
+    this.speedY = Math.random() * 1 - 0.5;
+  }
+
+  update(): void {
+    this.x += this.speedX;
+    this.y += this.speedY;
+
+    if (this.x < 0 || this.x > this.canvasWidth) this.speedX *= -1;
+    if (this.y < 0 || this.y > this.canvasHeight) this.speedY *= -1;
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+const Page = () => {
+  const [callStatus, setCallStatus] = useState<CallStatus>("idle");
+  const [aiState, setAiState] = useState<AIState>("idle");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    let vapiInstance: VapiInstance | null = null;
+    const assistant = "01daf59f-62be-4edd-b6e9-dd2b9efda5a8";
+    const apiKey = "9ed68d2a-e0fc-4632-9c4f-3452af3de262";
+
+    const script = document.createElement("script");
+    script.src =
+      "https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js";
+    script.defer = true;
+    script.async = true;
+    document.body.appendChild(script);
+
+    const handleScriptLoad = () => {
+      vapiInstance = window.vapiSDK.run({
+        apiKey,
+        assistant,
+        dailyConfig: {
+          dailyJsVersion: "0.47.0",
         },
       });
 
-      streamRef.current = stream;
-
-      const socket = new WebSocket(
-        "wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000",
-        ["token", DEEPGRAM_API_KEY]
-      );
-
-      webSocketRef.current = socket;
-
-      socket.onopen = () => {
-        const audioContext = new AudioContext({
-          sampleRate: 16000,
-        });
-        audioContextRef.current = audioContext;
-
-        const source = audioContext.createMediaStreamSource(stream);
-        const processor = audioContext.createScriptProcessor(2048, 1, 1);
-        processorRef.current = processor;
-
-        source.connect(processor);
-        processor.connect(audioContext.destination);
-
-        processor.onaudioprocess = (e: AudioProcessingEvent) => {
-          if (socket.readyState === WebSocket.OPEN && !isPaused) {
-            const inputData = e.inputBuffer.getChannelData(0);
-            const pcmData = new Int16Array(inputData.length);
-            for (let i = 0; i < inputData.length; i++) {
-              pcmData[i] = Math.min(1, inputData[i]) * 0x7fff;
-            }
-            socket.send(pcmData.buffer);
-          }
-        };
-      };
-
-      socket.onmessage = (event: MessageEvent) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "Results") {
-          const transcript = data.channel?.alternatives[0]?.transcript;
-          if (transcript && transcript.trim()) {
-            setCurrentTranscript((prev) => {
-              const newTranscript = prev + " " + transcript;
-              return newTranscript.trim();
-            });
-          }
+      vapiInstance.on("speech-start", () => setAiState("speaking"));
+      vapiInstance.on("speech-end", () => setAiState("active"));
+      vapiInstance.on("call-start", () => {
+        setCallStatus("active");
+        setAiState("active");
+      });
+      vapiInstance.on("call-end", () => {
+        setCallStatus("idle");
+        setAiState("idle");
+      });
+      vapiInstance.on("message", (message?: VapiMessage) => {
+        if (message?.type === "transcript" && message.transcript) {
+          setAiState("listening");
+          setTimeout(() => setAiState("active"), 1000);
         }
-      };
+      });
+    };
 
-      socket.onerror = (error: Event) => {
-        console.error("WebSocket Error:", error);
-      };
+    script.addEventListener("load", handleScriptLoad);
 
-      socket.onclose = () => {
-        console.log("WebSocket closed");
-      };
-
-      setIsRecording(true);
-      setIsPaused(false);
-    } catch (err) {
-      console.error("Error starting recording:", err);
-    }
-  };
-
-  const pauseRecording = () => {
-    setIsPaused(true);
-  };
-
-  const resumeRecording = () => {
-    setIsPaused(false);
-  };
-
-  const stopRecording = () => {
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
-    if (webSocketRef.current) {
-      webSocketRef.current.close();
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    setIsRecording(false);
-    setIsPaused(false);
-  };
-
-  const redoRecording = () => {
-    stopRecording();
-    setCurrentTranscript("");
-  };
-
-  const submitTranscript = async () => {
-    if (currentTranscript.trim() && !isCompleted) {
-      try {
-        setIsLoading(true);
-        const finalTranscript = currentTranscript.trim();
-
-        setMessages((prev) => [
-          ...prev,
-          { text: finalTranscript, isAI: false },
-        ]);
-
-        const response = await fetch(
-          `${API_BASE_URL}/data2/analyze-transcript`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              transcript: finalTranscript,
-              previous_qa: previousQA,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const data: AnalyzeResponse = await response.json();
-
-        if (data.found_question && data.found_answer) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: `Found an answer!\n\nQuestion: ${data.found_question}\nAnswer: ${data.found_answer}`,
-              isAI: true,
-            },
-          ]);
-          setPreviousQA(data.previous_qa);
-        }
-
-        if (data.next_question) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: `Now, please tell me about:\n\n${data.next_question}`,
-              isAI: true,
-            },
-          ]);
-        } else if (!data.completed) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: "I couldn't find an answer in that transcript. Please try answering any of the remaining questions.",
-              isAI: true,
-            },
-          ]);
-        }
-
-        setIsCompleted(data.completed);
-        if (data.completed) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              text: "Great! All questions have been answered. Thank you for your participation!",
-              isAI: true,
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error submitting transcript:", error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Sorry, there was an error analyzing your response. Please try again.",
-            isAI: true,
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
-        setCurrentTranscript("");
-        stopRecording();
-      }
-    }
-  };
-
-  useEffect(() => {
     return () => {
-      if (processorRef.current) {
-        processorRef.current.disconnect();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (webSocketRef.current) {
-        webSocketRef.current.close();
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+      script.removeEventListener("load", handleScriptLoad);
+      document.body.removeChild(script);
     };
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const particles: Particle[] = [];
+    const particleCount = 100;
+    let animationFrameId: number;
+
+    const createParticles = () => {
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(canvas.width, canvas.height));
+      }
+    };
+
+    const animateParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((particle) => {
+        particle.update();
+        particle.draw(ctx);
+      });
+
+      animationFrameId = requestAnimationFrame(animateParticles);
+    };
+
+    createParticles();
+    animateParticles();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  const getStateColor = () => {
+    const colors = {
+      speaking: "bg-green-400",
+      listening: "bg-blue-400",
+      active: "bg-cyan-400",
+      idle: "bg-gray-400",
+    };
+    return colors[aiState];
+  };
+
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto p-4 bg-gray-50 overflow-y-auto">
-      <div className="flex-1 space-y-4 overflow-y-auto">
-        {messages.map((message, index) => (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col items-center justify-center p-8">
+      <h1 className="text-6xl font-bold mb-12 text-cyan-300">
+        Heller AI Agent
+      </h1>
+
+      <div className="relative w-64 h-64 mb-12">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full"
+          width={256}
+          height={256}
+        />
+        <div
+          className={`absolute inset-0 rounded-full border-2 ${
+            callStatus === "active" ? "border-cyan-400" : "border-cyan-600"
+          } flex items-center justify-center transition-all duration-500`}
+        >
           <div
-            key={index}
-            className={`flex ${message.isAI ? "justify-start" : "justify-end"}`}
+            className={`w-56 h-56 rounded-full ${
+              callStatus === "active"
+                ? "bg-cyan-400 bg-opacity-10"
+                : "bg-transparent"
+            } flex items-center justify-center transition-all duration-500`}
           >
-            <div
-              className={`rounded-lg p-3 max-w-[80%] ${
-                message.isAI
-                  ? "bg-[#011A2E05] text-gray-800"
-                  : "bg-[#011A2ECC] text-white"
-              }`}
-            >
-              {message.text}
-            </div>
+            {callStatus === "active" && (
+              <div className="relative">
+                <div
+                  className={`w-12 h-12 ${getStateColor()} rounded-full opacity-50 animate-pulse`}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {aiState === "speaking" && (
+                    <Speaker className="w-6 h-6 text-white" />
+                  )}
+                  {aiState === "listening" && (
+                    <Mic className="w-6 h-6 text-white" />
+                  )}
+                  {aiState === "active" && (
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-        {currentTranscript && (
-          <div className="flex justify-end">
-            <div className="bg-[#011A2ECC] text-white rounded-lg p-3 max-w-[80%] opacity-70">
-              {currentTranscript}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      <div className="flex items-center justify-center space-x-4 p-4 border-t mt-4">
-        {isCompleted ? (
-          <div className="text-green-600 font-medium">
-            All questions answered! Thank you for your participation.
-          </div>
-        ) : !isRecording ? (
-          <button
-            onClick={startRecording}
-            className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-400"
-            disabled={isLoading}
-          >
-            <Mic className="w-6 h-6" />
-          </button>
-        ) : (
-          <>
-            {!isPaused ? (
-              <button
-                onClick={pauseRecording}
-                className="p-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors disabled:bg-gray-400"
-                disabled={isLoading}
-              >
-                <Square className="w-6 h-6" />
-              </button>
-            ) : (
-              <button
-                onClick={resumeRecording}
-                className="p-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors disabled:bg-gray-400"
-                disabled={isLoading}
-              >
-                <Play className="w-6 h-6" />
-              </button>
-            )}
-
-            <button
-              onClick={redoRecording}
-              className="p-3 bg-yellow-600 text-white rounded-full hover:bg-yellow-700 transition-colors disabled:bg-gray-400"
-              disabled={isLoading}
-            >
-              <RotateCcw className="w-6 h-6" />
-            </button>
-
-            <button
-              onClick={submitTranscript}
-              className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-gray-400"
-              disabled={isLoading || !currentTranscript.trim()}
-            >
-              <Send className="w-6 h-6" />
-            </button>
-          </>
-        )}
+      <div className="text-center space-y-4">
+        <p className="text-2xl font-medium text-cyan-200">
+          {callStatus === "idle" && "Heller AI is ready"}
+          {callStatus === "active" &&
+            aiState === "speaking" &&
+            "Heller AI is speaking"}
+          {callStatus === "active" &&
+            aiState === "listening" &&
+            "Heller AI is listening"}
+          {callStatus === "active" &&
+            aiState === "active" &&
+            "Heller AI is active"}
+        </p>
+        <p className="text-lg text-gray-400">Share your knowledge with us</p>
       </div>
     </div>
   );
-}
+};
+
+export default Page;
