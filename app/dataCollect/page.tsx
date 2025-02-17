@@ -150,8 +150,14 @@ const Page = () => {
 
     return () => {
       script.removeEventListener("load", handleScriptLoad);
+
       if (script.parentNode) {
         script.parentNode.removeChild(script);
+      }
+      // Clean up Vapi button
+      const vapiButton = document.querySelector(".vapi-btn");
+      if (vapiButton) {
+        vapiButton.remove();
       }
     };
   }, []);
