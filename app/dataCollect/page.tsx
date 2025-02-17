@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Mic, Speaker } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { CallButtonSvg } from "../ui/call-button";
+import { Button } from "@/components/ui/button";
 
-// Types
 type CallStatus = "idle" | "active";
 type AIState = "idle" | "speaking" | "listening" | "active";
 
@@ -31,46 +33,9 @@ interface VapiMessage {
   transcriptType?: string;
 }
 
-// Declare global window type
 declare global {
   interface Window {
     vapiSDK: VapiSDK;
-  }
-}
-
-class Particle {
-  x: number;
-  y: number;
-  size: number;
-  speedX: number;
-  speedY: number;
-  canvasWidth: number;
-  canvasHeight: number;
-
-  constructor(canvasWidth: number, canvasHeight: number) {
-    this.canvasWidth = canvasWidth;
-    this.canvasHeight = canvasHeight;
-    this.x = Math.random() * canvasWidth;
-    this.y = Math.random() * canvasHeight;
-    this.size = Math.random() * 2 + 0.5;
-    this.speedX = Math.random() * 1 - 0.5;
-    this.speedY = Math.random() * 1 - 0.5;
-  }
-
-  update(): void {
-    this.x += this.speedX;
-    this.y += this.speedY;
-
-    if (this.x < 0 || this.x > this.canvasWidth) this.speedX *= -1;
-    if (this.y < 0 || this.y > this.canvasHeight) this.speedY *= -1;
-  }
-
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.fill();
   }
 }
 
@@ -80,8 +45,10 @@ const Page = () => {
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [aiState, setAiState] = useState<AIState>("idle");
   const [analysisQuestions, setAnalysisQuestions] = useState<string[]>([]);
+  const vapiButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [userTranscript, setUserTranscript] = useState<string>("");
   const transcriptRef = useRef<string>("");
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const logIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -97,6 +64,21 @@ const Page = () => {
     document.body.appendChild(script);
 
     const handleScriptLoad = () => {
+      setTimeout(() => {
+        const vapiButton = document.querySelector(
+          ".vapi-btn"
+        ) as HTMLButtonElement;
+        if (vapiButton) {
+          vapiButtonRef.current = vapiButton;
+          const buttonContainer = document.querySelector(
+            "#vapi-button-container"
+          );
+          if (buttonContainer) {
+            buttonContainer.appendChild(vapiButton);
+          }
+        }
+      }, 1000);
+
       vapiInstance = window.vapiSDK.run({
         apiKey,
         assistant,
@@ -140,7 +122,7 @@ const Page = () => {
               console.error("Error sending transcript to API:", error);
             }
           }
-        }, 30000);
+        }, 10000);
       });
 
       vapiInstance.on("call-end", () => {
@@ -156,6 +138,7 @@ const Page = () => {
 
       vapiInstance.on("message", (message?: VapiMessage) => {
         console.log("message ", message);
+
         if (message?.type === "transcript" && message.transcript) {
           setAiState("listening");
           // Only append transcript when role is user
@@ -183,135 +166,155 @@ const Page = () => {
         vapiButton.remove();
       }
     };
-  }, []);
+  }, [callStatus]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleStartClick = () => {
+    if (vapiButtonRef.current) {
+      vapiButtonRef.current.click();
+    }
+  };
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const handleEndClick = () => {
+    if (vapiButtonRef.current) {
+      vapiButtonRef.current.click();
+    }
+  };
 
-    const particles: Particle[] = [];
-    const particleCount = 100;
-    let animationFrameId: number;
-
-    const createParticles = () => {
-      for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle(canvas.width, canvas.height));
-      }
-    };
-
-    const animateParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((particle) => {
-        particle.update();
-        particle.draw(ctx);
-      });
-      animationFrameId = requestAnimationFrame(animateParticles);
-    };
-
-    createParticles();
-    animateParticles();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, []);
-
-  const getStateColor = () => {
-    const colors = {
-      speaking: "bg-green-400",
-      listening: "bg-blue-400",
-      active: "bg-yellow-400",
-      idle: "bg-gray-400",
-    };
-    return colors[aiState];
+  const handleResetClick = () => {
+    window.location.reload();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-6xl font-bold mb-12 text-cyan-300">
-        Heller AI Agent
-      </h1>
-
-      <div className="relative w-64 h-64 mb-12">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-          width={256}
-          height={256}
-        />
-        <div
-          className={`absolute inset-0 rounded-full border-2 ${
-            callStatus === "active" ? "border-cyan-400" : "border-cyan-600"
-          } flex items-center justify-center transition-all duration-500`}
-        >
-          <div
-            className={`w-56 h-56 rounded-full ${
-              callStatus === "active"
-                ? "bg-cyan-400 bg-opacity-10"
-                : "bg-transparent"
-            } flex items-center justify-center transition-all duration-500`}
-          >
-            {callStatus === "active" && (
-              <div className="relative">
-                <div
-                  className={`w-12 h-12 ${getStateColor()} rounded-full opacity-50 animate-pulse`}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {aiState === "speaking" && (
-                    <Speaker className="w-6 h-6 text-white" />
-                  )}
-                  {aiState === "listening" && (
-                    <Mic className="w-6 h-6 text-white" />
-                  )}
-                  {aiState === "active" && (
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8">
+      <div className="text-center space-y-3 mb-16">
+        <h1 className="text-3xl font-medium text-[#004869]">Heller&apos;s</h1>
+        <div className="flex items-center justify-center gap-2">
+          <Sparkles className="w-5 h-5 text-[#0083BF]" />
+          <h2 className="text-6xl font-bold text-[#0083BF]">AI Agent</h2>
         </div>
       </div>
 
-      <div className="text-center space-y-4 mb-8">
-        <p className="text-2xl font-medium text-cyan-200">
-          {callStatus === "idle" && "Heller AI is ready"}
-          {callStatus === "active" &&
-            aiState === "speaking" &&
-            "Heller AI is speaking"}
-          {callStatus === "active" &&
-            aiState === "listening" &&
-            "Heller AI is listening"}
-          {callStatus === "active" &&
-            aiState === "active" &&
-            "Heller AI is active"}
+      <div className="text-center mb-12">
+        <p className="text-2xl font-normal text-[#004869]">
+          Heller AI is{" "}
+          <span className="text-[#0083BF]">
+            {callStatus === "idle" && "ready"}
+            {callStatus === "active" && aiState === "speaking" && "speaking"}
+            {callStatus === "active" && aiState === "listening" && "listening"}
+            {callStatus === "active" && aiState === "active" && "active"}
+          </span>
         </p>
-        <p className="text-lg text-gray-400">Share your knowledge with us</p>
       </div>
 
-      {/* Analysis Questions Display */}
+      <div
+        id="vapi-button-container"
+        className="relative w-[240px] h-[240px] mb-8"
+      >
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <CallButtonSvg aiState={aiState} />
+        </div>
+      </div>
+
+      <div className="flex gap-4">
+        {callStatus === "idle" ? (
+          <Button
+            onClick={handleStartClick}
+            className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+          >
+            Start Heller Talk
+          </Button>
+        ) : (
+          <>
+            <Button
+              onClick={handleEndClick}
+              className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+            >
+              End Heller Talk
+            </Button>
+            <Button
+              onClick={handleResetClick}
+              variant="outline"
+              className="border-[#0083BF] text-[#0083BF] hover:bg-[#0083BF]/10"
+            >
+              Reset Heller Talk
+            </Button>
+          </>
+        )}
+      </div>
+
       {analysisQuestions.length > 0 && (
-        <div className="w-full max-w-2xl mt-8">
-          <div className="bg-gray-800 rounded-lg p-4 h-64 overflow-y-auto">
-            <h2 className="text-xl font-semibold text-cyan-300 mb-4">
-              Questions Answered
-            </h2>
-            <div className="space-y-4">
-              {analysisQuestions.map((question, index) => (
-                <div
-                  key={index}
-                  className="p-3 bg-gray-700 rounded-lg text-white"
-                >
-                  {question}
-                </div>
-              ))}
-            </div>
+        <div className="text-center space-y-2 mt-8">
+          <p className="text-xl text-[#004869]">You are Discussing</p>
+          <div className="inline-block px-4 py-2 rounded-lg">
+            <p className="text-[#004869]">{analysisQuestions[0]}</p>
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        #vapi-button-container .vapi-btn {
+          opacity: 0 !important;
+          position: absolute !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          cursor: pointer !important;
+          z-index: 20 !important;
+        }
+
+        #vapi-button-container svg {
+          pointer-events: none !important;
+          user-select: none !important;
+        }
+
+        @keyframes speaking {
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+
+        @keyframes listening {
+          0%,
+          100% {
+            transform: scale(0.95);
+          }
+          50% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes sparkle {
+          0%,
+          100% {
+            opacity: 0.4;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+
+        .animate-speaking .sparkle-1 {
+          animation: sparkle 2s infinite ease-in-out;
+        }
+
+        .animate-speaking .sparkle-2 {
+          animation: sparkle 2s infinite ease-in-out 0.3s;
+        }
+
+        .animate-speaking .sparkle-3 {
+          animation: sparkle 2s infinite ease-in-out 0.6s;
+        }
+
+        .animate-listening .sparkle-1,
+        .animate-listening .sparkle-2,
+        .animate-listening .sparkle-3 {
+          animation: sparkle 1s infinite ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };
