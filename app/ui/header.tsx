@@ -1,24 +1,56 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Mic } from "lucide-react";
+// import { Mic } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const flags = [
+    {
+      src: "https://heller-proto-frontend.vercel.app/usa.png",
+      alt: "USA Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/china.png",
+      alt: "China Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/india.png",
+      alt: "India Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/japan.png",
+      alt: "Japan Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/korea.png",
+      alt: "Korea Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/thailand.png",
+      alt: "Thailand Flag",
+    },
+    {
+      src: "https://heller-proto-frontend.vercel.app/vietnam.png",
+      alt: "Vietnam Flag",
+    },
+  ];
+
   return (
     <nav className="w-full h-20 bg-[#011A2E] px-10 relative flex items-center font-montserrat">
-      {/* Left section */}
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-white/10 rounded-lg flex justify-center items-center hover:bg-white/20 transition-colors duration-200">
-          <Mic className="text-white w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-white font-semibold text-xl">AI CAD Analyzer</h1>
-          <p className="text-white/60 text-sm">Intelligent Design Analysis</p>
-        </div>
+      {/* Left section - Flags */}
+      <div className="flex items-center gap-2">
+        {flags.map((flag, index) => (
+          <img
+            key={index}
+            src={flag.src}
+            alt={flag.alt}
+            className="w-8 h-6 object-cover rounded-sm hover:scale-110 transition-transform duration-200"
+          />
+        ))}
       </div>
 
       {/* Center logo - absolute positioning to keep it centered */}

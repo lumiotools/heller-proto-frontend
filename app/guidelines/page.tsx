@@ -198,7 +198,7 @@ const Guidelines: React.FC = () => {
   return (
     <div className="min-h-screen bg-white p-12">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-[#011A2ECC] text-5xl font-bold mb-12 text-center">
+        <h1 className="text-[#011A2ECC] text-[48px] leading-[56px] font-bold mb-12 text-center antialiased">
           Mechanical Design Guidelines
         </h1>
 
@@ -215,17 +215,17 @@ const Guidelines: React.FC = () => {
                     <TooltipTrigger asChild>
                       <TabsTrigger
                         value={category}
-                        className={`px-10 py-4 rounded-lg text-[#011A2E] text-lg font-medium transition-colors
-                        ${
-                          category === activeTab
-                            ? "bg-white shadow-md border border-gray-200"
-                            : "bg-gray-50 hover:bg-gray-100"
-                        }`}
+                        className={`px-10 py-4 rounded-lg text-[#011A2E] text-[16px] leading-[24px] font-medium transition-colors
+                      ${
+                        category === activeTab
+                          ? "bg-white shadow-md border border-gray-200"
+                          : "bg-gray-50 hover:bg-gray-100"
+                      }`}
                       >
                         {shortTitle}
                       </TabsTrigger>
                     </TooltipTrigger>
-                    <TooltipContent className="text-base p-2">
+                    <TooltipContent className="text-[14px] leading-[20px] p-2">
                       <p>{categoryFullTitles[category as CategoryType]}</p>
                     </TooltipContent>
                   </Tooltip>
@@ -242,7 +242,7 @@ const Guidelines: React.FC = () => {
             >
               <Card className="border border-gray-200 shadow-lg rounded-xl">
                 <CardContent className="p-10">
-                  <h2 className="text-[#0083BF] text-3xl font-semibold mb-8">
+                  <h2 className="text-[#0083BF] text-[28px] leading-[36px] font-semibold mb-8">
                     {fullTitle}
                   </h2>
                   <div className="space-y-6">
@@ -253,10 +253,10 @@ const Guidelines: React.FC = () => {
                           key={index}
                           className="flex items-start gap-6 bg-transparent border-0 p-0 hover:bg-gray-50 rounded-lg transition-colors duration-200"
                         >
-                          <div className="flex-shrink-0 mt-1">
+                          <div className="flex-shrink-0 mt-1.5">
                             {guideline.icon}
                           </div>
-                          <AlertDescription className="text-[#011A2E] text-lg py-1">
+                          <AlertDescription className="text-[#011A2E] text-[16px] leading-[24px] py-1">
                             {guideline.text}
                           </AlertDescription>
                         </Alert>
