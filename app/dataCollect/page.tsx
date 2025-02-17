@@ -297,7 +297,7 @@ const Page = () => {
         <div className="w-full max-w-2xl mt-8">
           <div className="bg-gray-800 rounded-lg p-4 h-64 overflow-y-auto">
             <h2 className="text-xl font-semibold text-cyan-300 mb-4">
-              Analysis Results
+              Questions Answered
             </h2>
             <div className="space-y-4">
               {analysisQuestions.map((question, index) => (
