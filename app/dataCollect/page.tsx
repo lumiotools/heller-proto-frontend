@@ -142,9 +142,22 @@ const Page = () => {
               const data = await response.json();
               console.log("Analysis Response:", data);
               if (data.answered_questions) {
-                const questionList = data.answered_questions
-                  .split("\\n\\n")
-                  .filter((q: string) => q.trim().length > 0);
+                let rawText: string = data.answered_questions.trim();
+
+                // Remove surrounding quotes if the entire string is wrapped
+                if (rawText.startsWith('"') && rawText.endsWith('"')) {
+                  rawText = rawText.slice(1, -1);
+                }
+
+                // Normalize escaped newlines (\\n\\n → \n\n)
+                rawText = rawText.replace(/\\n/g, "\n");
+
+                // Split based on consistent double newlines while handling potential inconsistent formatting
+                const questionList: string[] = rawText
+                  .split(/\n\n|"\s*\n\n\s*"|"\s*|\s*"/) // Handles variations of newline delimiters and quotes
+                  .map((q: string) => q.trim()) // Explicitly define `q` as string
+                  .filter((q: string) => q.length > 0);
+
                 setAnalysisQuestions(questionList);
               }
             } catch (error) {
@@ -208,11 +221,12 @@ const Page = () => {
 
   const handleEndClick = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      if (vapiButtonRef.current) {
-        vapiButtonRef.current.click();
-      }
-    }, 400);
+    // setTimeout(() => {
+    //   if (vapiButtonRef.current) {
+    //     vapiButtonRef.current.click();
+    //   }
+    // }, 400);
+    window.location.reload();
   };
 
   const handleResetClick = () => {
