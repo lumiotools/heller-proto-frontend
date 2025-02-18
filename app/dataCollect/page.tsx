@@ -5,7 +5,33 @@ import { useEffect, useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
 import { CallButtonSvg } from "../ui/call-button";
 import { Button } from "@/components/ui/button";
+import { LineChart, Database, BookOpen } from "lucide-react";
+import SpeakingAnimation from "../ui/speaking-animation";
+import MicButton from "../ui/mic-button";
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  isHighlighted?: boolean;
+}
 
+const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon,
+  title,
+  isHighlighted = false,
+}) => {
+  return (
+    <div
+      className={`flex items-center h-12 rounded-lg px-6 ${
+        isHighlighted ? "bg-blue-100/80" : "bg-blue-50"
+      }`}
+    >
+      <div className="bg-[#FFFFFF66] w-8 h-8 rounded flex items-center justify-center mr-4">
+        <div className="text-[#0083BF]">{icon}</div>
+      </div>
+      <span className="text-[#011A2E] text-sm font-normal">{title}</span>
+    </div>
+  );
+};
 type CallStatus = "idle" | "active";
 type AIState = "idle" | "speaking" | "listening" | "active";
 
@@ -195,14 +221,105 @@ const Page = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8">
-      <div className="text-center space-y-3 mb-16">
-        <h1 className="text-3xl font-medium text-[#004869]">Heller&apos;s</h1>
+      <div className="text-center space-y-3">
+        <h1 className="text-3xl font-semibold text-[#011A2E]">Heller&apos;s</h1>
         <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#0083BF]" />
+          <svg
+            width="82"
+            height="83"
+            viewBox="0 0 42 43"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g filter="url(#filter0_f_77_4866)">
+              <path
+                d="M29.9003 37.0088C29.8231 33.3665 32.7545 30.3724 36.3975 30.3724H36.5367H36.4665C32.8126 30.3724 29.8614 27.3897 29.9003 23.736L29.8933 23.953C29.7781 27.5313 26.844 30.3724 23.2639 30.3724C26.8186 30.3724 29.7409 33.1756 29.8886 36.7272L29.9003 37.0088Z"
+                fill="#0083BF"
+              />
+            </g>
+            <path
+              d="M29.9003 37.0088C29.8231 33.3665 32.7545 30.3724 36.3975 30.3724H36.5367H36.4665C32.8126 30.3724 29.8614 27.3897 29.9003 23.736L29.8933 23.953C29.7781 27.5313 26.844 30.3724 23.2639 30.3724C26.8186 30.3724 29.7409 33.1756 29.8886 36.7272L29.9003 37.0088Z"
+              fill="#011A2E"
+            />
+            <g filter="url(#filter1_f_77_4866)">
+              <path
+                d="M17.7451 30.3724C17.6037 23.7011 22.973 18.2167 29.6459 18.2167H29.9008H29.7722C23.0794 18.2167 17.6739 12.7533 17.7451 6.06093L17.7323 6.45849C17.5212 13.0127 12.147 18.2167 5.58936 18.2167C12.1004 18.2167 17.4531 23.3513 17.7237 29.8568L17.7451 30.3724Z"
+                fill="#0B74C8"
+              />
+            </g>
+            <path
+              d="M17.7451 30.3724C17.6037 23.7011 22.973 18.2167 29.6459 18.2167H29.9008H29.7722C23.0794 18.2167 17.6739 12.7533 17.7451 6.06093L17.7323 6.45849C17.5212 13.0127 12.147 18.2167 5.58936 18.2167C12.1004 18.2167 17.4531 23.3513 17.7237 29.8568L17.7451 30.3724Z"
+              fill="#0083BF"
+            />
+            <defs>
+              <filter
+                id="filter0_f_77_4866"
+                x="17.7938"
+                y="18.2659"
+                width="24.2129"
+                height="24.213"
+                filterUnits="userSpaceOnUse"
+                color-interpolation-filters="sRGB"
+              >
+                <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                <feBlend
+                  mode="normal"
+                  in="SourceGraphic"
+                  in2="BackgroundImageFix"
+                  result="shape"
+                />
+                <feGaussianBlur
+                  stdDeviation="2.73504"
+                  result="effect1_foregroundBlur_77_4866"
+                />
+              </filter>
+              <filter
+                id="filter1_f_77_4866"
+                x="0.119269"
+                y="0.590842"
+                width="35.2517"
+                height="35.2517"
+                filterUnits="userSpaceOnUse"
+                color-interpolation-filters="sRGB"
+              >
+                <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                <feBlend
+                  mode="normal"
+                  in="SourceGraphic"
+                  in2="BackgroundImageFix"
+                  result="shape"
+                />
+                <feGaussianBlur
+                  stdDeviation="2.73504"
+                  result="effect1_foregroundBlur_77_4866"
+                />
+              </filter>
+            </defs>
+          </svg>
           <h2 className="text-6xl font-bold text-[#0083BF]">AI Agent</h2>
         </div>
       </div>
+      <div className="text-center mb-12 mt-8">
+        <p className="text-sm font-medium text-[#004869]">
+          A smart voice assistant that captures expert knowledge to preserve
+          industry insights and enhance operational efficiency.
+        </p>
+      </div>
 
+      <div
+        id="vapi-button-container"
+        className="relative w-[240px] h-[240px] mb-4"
+      >
+        <div className="flex items-center justify-center">
+          {aiState === "speaking" ||
+          aiState === "listening" ||
+          aiState === "active" ? (
+            <SpeakingAnimation />
+          ) : (
+            <MicButton />
+          )}{" "}
+        </div>
+      </div>
       <div className="text-center mb-12">
         <p className="text-2xl font-normal text-[#004869]">
           Heller AI is{" "}
@@ -215,20 +332,11 @@ const Page = () => {
         </p>
       </div>
 
-      <div
-        id="vapi-button-container"
-        className="relative w-[240px] h-[240px] mb-8"
-      >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <CallButtonSvg aiState={aiState} />
-        </div>
-      </div>
-
       <div className="flex gap-4">
         {callStatus === "idle" ? (
           <Button
             onClick={handleStartClick}
-            className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+            className="bg-[#08ACF7] hover:bg-[#006699] text-white text-sm font-semibold px-2 py-2 rounded-md cursor-pointer"
             disabled={isLoading}
           >
             {isLoading ? "Starting..." : "Start Heller Talk"}
@@ -237,7 +345,7 @@ const Page = () => {
           <>
             <Button
               onClick={handleEndClick}
-              className="bg-[#0083BF] hover:bg-[#006699] text-white font-medium px-8 py-2 rounded-md"
+              className="bg-[#08ACF7] hover:bg-[#006699] text-white font-medium px-2 py-2 rounded-md cursor-pointer"
               disabled={isLoading}
             >
               {isLoading ? "Ending..." : "End Heller Talk"}
@@ -245,13 +353,34 @@ const Page = () => {
             <Button
               onClick={handleResetClick}
               variant="outline"
-              className="border-[#0083BF] text-[#0083BF] hover:bg-[#0083BF]/10"
+              className="border-[#08ACF7] text-[#0083BF] hover:bg-[#0083BF]/10 cursor-pointer"
               disabled={isLoading}
             >
-              Reset Heller Talk
+              Reset Talk
             </Button>
           </>
         )}
+      </div>
+
+      <div className="text-center mb-4 mt-8">
+        <p className="text-lg font-medium text-[#011A2E99]">Key Features</p>
+      </div>
+      <div className="flex gap-4">
+        <FeatureCard
+          icon={<BookOpen size={20} />}
+          title="Interactive Knowledge Capture"
+          isHighlighted={true}
+        />
+        <FeatureCard
+          icon={<LineChart size={20} />}
+          title="Dynamic Topic Adaptation"
+          isHighlighted={true}
+        />
+        <FeatureCard
+          icon={<Database size={20} />}
+          title="Smart Transcript & Data Storage"
+          isHighlighted={true}
+        />
       </div>
 
       {analysisQuestions.length > 0 && (
