@@ -62,13 +62,13 @@ export default function MicButton() {
       >
         {isHovered ? (
           <svg
+            xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            className="w-20 h-20 text-sky-400"
-            fill="currentColor"
-            stroke="none"
+            fill="#00AFFF"
+            width="70"
+            height="70"
           >
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+            <path d="M12 14c2.21 0 4-1.79 4-4V5c0-2.21-1.79-4-4-4S8 2.79 8 5v5c0 2.21 1.79 4 4 4zm6-4c0 3.31-2.69 6-6 6s-6-2.69-6-6H4c0 4.08 3.06 7.44 7 7.93V22h2v-4.07c3.94-.49 7-3.85 7-7.93h-2z" />
           </svg>
         ) : (
           <Mic className="w-20 h-20 text-sky-400 stroke-[1.25]" />
