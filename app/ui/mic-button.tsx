@@ -4,15 +4,16 @@ import { Mic, Sparkle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
-export default function MicButton() {
+export default function MicButton({ onClick }: { onClick?: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <motion.button
-      className="relative w-48 h-48 rounded-full flex items-center justify-center"
+      className="relative w-48 h-48 rounded-full flex items-center justify-center cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ scale: 1.02 }}
+      onClick={onClick} // Added onClick event here
     >
       {/* Outer blue ring with shadow */}
       <div className="absolute inset-0 rounded-full border-4 border-sky-400 shadow-[0_0_0_2px_rgba(0,0,0,0.05)]" />

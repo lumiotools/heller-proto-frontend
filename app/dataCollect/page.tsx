@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LineChart, Database, BookOpen } from "lucide-react";
 import SpeakingAnimation from "../ui/speaking-animation";
 import MicButton from "../ui/mic-button";
+import ListeningIndicator from "../ui/listening-indicator";
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
@@ -183,12 +184,12 @@ const Page = () => {
         console.log("message ", message);
 
         if (message?.type === "transcript" && message.transcript) {
-          setAiState("listening");
           // Only append transcript when role is user
           if (message.role === "user") {
             transcriptRef.current += message.transcript;
+            setAiState("listening");
           }
-          setTimeout(() => setAiState("active"), 1000);
+          // setTimeout(() => setAiState("active"), 1000);
         } else if (message?.type === "speech" && message.speech) {
           setAiState("speaking");
           transcriptRef.current += "\nAI: " + message.speech;
@@ -325,13 +326,13 @@ const Page = () => {
         className="relative w-[240px] h-[240px] mb-4"
       >
         <div className="flex items-center justify-center">
-          {aiState === "speaking" ||
-          aiState === "listening" ||
-          aiState === "active" ? (
+          {aiState === "speaking" ? (
             <SpeakingAnimation />
+          ) : aiState === "active" || aiState === "listening" ? (
+            <ListeningIndicator />
           ) : (
-            <MicButton />
-          )}{" "}
+            <MicButton onClick={handleStartClick} />
+          )}
         </div>
       </div>
       <div className="text-center mb-12">
