@@ -238,10 +238,10 @@ const Page = () => {
     <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8">
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-semibold text-[#011A2E]">Heller&apos;s</h1>
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           <svg
-            width="82"
-            height="83"
+            width="72"
+            height="73"
             viewBox="0 0 42 43"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
