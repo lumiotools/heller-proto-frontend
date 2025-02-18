@@ -314,17 +314,14 @@ const Page = () => {
           <h2 className="text-6xl font-bold text-[#0083BF]">AI Agent</h2>
         </div>
       </div>
-      <div className="text-center mb-12 mt-8">
+      <div className="text-center mb-10 mt-6">
         <p className="text-sm font-medium text-[#004869]">
           A smart voice assistant that captures expert knowledge to preserve
           industry insights and enhance operational efficiency.
         </p>
       </div>
 
-      <div
-        id="vapi-button-container"
-        className="relative w-[240px] h-[240px] mb-4"
-      >
+      <div id="vapi-button-container" className="relative mb-4">
         <div className="flex items-center justify-center">
           {aiState === "speaking" ? (
             <SpeakingAnimation />
@@ -335,7 +332,7 @@ const Page = () => {
           )}
         </div>
       </div>
-      <div className="text-center mb-12">
+      <div className="text-center mb-10">
         <p className="text-2xl font-normal text-[#004869]">
           Heller AI is{" "}
           <span className="text-[#0083BF]">
@@ -347,11 +344,11 @@ const Page = () => {
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col items-center gap-2">
         {callStatus === "idle" ? (
           <Button
             onClick={handleStartClick}
-            className="bg-[#08ACF7] hover:bg-[#006699] text-white text-sm font-semibold px-2 py-2 rounded-md cursor-pointer"
+            className="bg-[#08ACF7] hover:bg-[#006699] text-white text-sm text-center font-semibold px-2.5 py-3 rounded-sm cursor-pointer w-32"
             disabled={isLoading}
           >
             {isLoading ? "Starting..." : "Start Heller Talk"}
@@ -360,43 +357,44 @@ const Page = () => {
           <>
             <Button
               onClick={handleEndClick}
-              className="bg-[#08ACF7] hover:bg-[#006699] text-white font-medium px-2 py-2 rounded-md cursor-pointer"
+              className="bg-[#08ACF7] hover:bg-[#006699] text-white text-sm text-center font-semibold px-2.5 py-3 rounded-sm cursor-pointer w-32"
               disabled={isLoading}
             >
               {isLoading ? "Ending..." : "End Heller Talk"}
             </Button>
-            <Button
+            <span
               onClick={handleResetClick}
-              variant="outline"
-              className="border-[#08ACF7] text-[#0083BF] hover:bg-[#0083BF]/10 cursor-pointer"
-              disabled={isLoading}
+              className="text-[#08ACF7] hover:text-[#006699] cursor-pointer text-sm"
             >
               Reset Talk
-            </Button>
+            </span>
           </>
         )}
       </div>
-
-      <div className="text-center mb-4 mt-8">
-        <p className="text-lg font-medium text-[#011A2E99]">Key Features</p>
-      </div>
-      <div className="flex gap-4">
-        <FeatureCard
-          icon={<BookOpen size={20} />}
-          title="Interactive Knowledge Capture"
-          isHighlighted={true}
-        />
-        <FeatureCard
-          icon={<LineChart size={20} />}
-          title="Dynamic Topic Adaptation"
-          isHighlighted={true}
-        />
-        <FeatureCard
-          icon={<Database size={20} />}
-          title="Smart Transcript & Data Storage"
-          isHighlighted={true}
-        />
-      </div>
+      {aiState === "idle" && (
+        <>
+          <div className="text-center mb-4 mt-8">
+            <p className="text-lg font-medium text-[#011A2E99]">Key Features</p>
+          </div>
+          <div className="flex gap-4">
+            <FeatureCard
+              icon={<BookOpen size={20} />}
+              title="Interactive Knowledge Capture"
+              isHighlighted={true}
+            />
+            <FeatureCard
+              icon={<LineChart size={20} />}
+              title="Dynamic Topic Adaptation"
+              isHighlighted={true}
+            />
+            <FeatureCard
+              icon={<Database size={20} />}
+              title="Smart Transcript & Data Storage"
+              isHighlighted={true}
+            />
+          </div>
+        </>
+      )}
 
       {analysisQuestions.length > 0 && (
         <div className="text-center space-y-2 mt-8">
