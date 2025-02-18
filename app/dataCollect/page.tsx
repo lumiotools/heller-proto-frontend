@@ -225,7 +225,9 @@ const Page = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8">
       <div className="text-center space-y-3">
-        <h1 className="text-3xl font-semibold text-[#011A2E]">Heller&apos;s</h1>
+        <h1 className="text-3xl font-semibold text-[#011A2E] ml-4">
+          Heller&apos;s Tribal Knowledge
+        </h1>
         <div className="flex items-center justify-center gap-3">
           <svg
             width="72"
