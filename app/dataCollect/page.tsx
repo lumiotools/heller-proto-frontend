@@ -142,24 +142,12 @@ const Page = () => {
 
               const data = await response.json();
               console.log("Analysis Response:", data);
-              if (data.answered_questions) {
-                let rawText: string = data.answered_questions.trim();
-
-                // Remove surrounding quotes if the entire string is wrapped
-                if (rawText.startsWith('"') && rawText.endsWith('"')) {
-                  rawText = rawText.slice(1, -1);
-                }
-
-                // Normalize escaped newlines (\\n\\n → \n\n)
-                rawText = rawText.replace(/\\n/g, "\n");
-
-                // Split based on consistent double newlines while handling potential inconsistent formatting
-                const questionList: string[] = rawText
-                  .split(/\n\n|"\s*\n\n\s*"|"\s*|\s*"/) // Handles variations of newline delimiters and quotes
-                  .map((q: string) => q.trim()) // Explicitly define `q` as string
-                  .filter((q: string) => q.length > 0);
-
-                setAnalysisQuestions(questionList);
+              if (Array.isArray(data.answered_questions)) {
+                setAnalysisQuestions(data.answered_questions);
+              } else {
+                // Fallback handling if the response is not an array
+                console.error("Unexpected response format:", data);
+                setAnalysisQuestions([]);
               }
             } catch (error) {
               console.error("Error sending transcript to API:", error);
@@ -397,14 +385,20 @@ const Page = () => {
       )}
 
       {analysisQuestions.length > 0 && (
-        <div className="text-center space-y-2 mt-8">
-          <p className="text-xl text-[#004869]">You are Discussing</p>
-          <div className="inline-block px-4 py-2 rounded-lg">
-            <p className="text-[#004869]">{analysisQuestions[0]}</p>
+        <div className="text-center space-y-4 mt-8">
+          <p className="text-xl text-[#004869]">Discussion Topics</p>
+          <div className="space-y-3">
+            {analysisQuestions.map((question, index) => (
+              <div
+                key={index}
+                className="inline-block px-4 py-2 w-full max-w-2xl"
+              >
+                <p className="text-[#004869]">{question}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
-
       <style jsx global>{`
         #vapi-button-container .vapi-btn {
           opacity: 0 !important;
