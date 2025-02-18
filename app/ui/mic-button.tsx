@@ -26,8 +26,11 @@ export default function MicButton({ onClick }: { onClick?: () => void }) {
         {/* Thick blue ring */}
         <div className="absolute inset-0 rounded-full bg-gradient-to-b from-sky-400 to-sky-500" />
 
+        {/* Additional border ring */}
+        <div className="absolute inset-[18px] rounded-full bg-white border-[3px] border-[#0083BF] shadow-[0_10px_6px_rgba(1,26,46,0.18)]" />
+
         {/* White center */}
-        <div className="absolute inset-[16px] rounded-full bg-white" />
+        <div className="absolute inset-[21px] rounded-full bg-white" />
       </div>
 
       {/* Sparkles */}
