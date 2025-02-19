@@ -259,7 +259,7 @@ const Page = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8 relative">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-10">
         <Select
           value={selectedLanguage.value}
           onValueChange={(value) =>
