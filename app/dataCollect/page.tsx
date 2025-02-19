@@ -1,14 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState, useRef } from "react";
-import { Sparkles } from "lucide-react";
-import { CallButtonSvg } from "../ui/call-button";
 import { Button } from "@/components/ui/button";
 import { LineChart, Database, BookOpen } from "lucide-react";
 import SpeakingAnimation from "../ui/speaking-animation";
 import MicButton from "../ui/mic-button";
 import ListeningIndicator from "../ui/listening-indicator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
@@ -78,10 +86,37 @@ const Page = () => {
   const transcriptRef = useRef<string>("");
   const logIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const languageOptions = [
+    {
+      value: "en",
+      label: "English",
+      assistantId: "01daf59f-62be-4edd-b6e9-dd2b9efda5a8",
+    },
+    {
+      value: "hi",
+      label: "Hindi",
+      assistantId: "16db80e7-02e5-4b15-b275-9ae7f76ed1ca",
+    },
+    {
+      value: "zh",
+      label: "Chinese",
+      assistantId: "404f3811-189f-4e37-84a1-7858d59fc884",
+    },
+    {
+      value: "ja",
+      label: "Japanese",
+      assistantId: "322033f8-c2a8-474b-9e6d-db1519961006",
+    },
+    {
+      value: "ko",
+      label: "Korean",
+      assistantId: "b5079e84-fd35-473a-8685-9e3abe809cd5",
+    },
+  ];
+  const [selectedLanguage, setSelectedLanguage] = useState(languageOptions[0]);
 
   useEffect(() => {
     let vapiInstance: VapiInstance | null = null;
-    const assistant = "01daf59f-62be-4edd-b6e9-dd2b9efda5a8";
     const apiKey = "9ed68d2a-e0fc-4632-9c4f-3452af3de262";
 
     const script = document.createElement("script");
@@ -109,7 +144,7 @@ const Page = () => {
 
       vapiInstance = window.vapiSDK.run({
         apiKey,
-        assistant,
+        assistant: selectedLanguage.assistantId,
         dailyConfig: {
           dailyJsVersion: "0.47.0",
         },
@@ -198,7 +233,7 @@ const Page = () => {
         vapiButton.remove();
       }
     };
-  }, [callStatus]);
+  }, [selectedLanguage]);
 
   const handleStartClick = () => {
     setIsLoading(true);
@@ -223,7 +258,29 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#E6F3F9] flex flex-col items-center justify-center p-8 relative">
+      <div className="absolute top-4 right-4">
+        <Select
+          value={selectedLanguage.value}
+          onValueChange={(value) =>
+            setSelectedLanguage(
+              languageOptions.find((lang) => lang.value === value) ||
+                languageOptions[0]
+            )
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select Language" />
+          </SelectTrigger>
+          <SelectContent>
+            {languageOptions.map((lang) => (
+              <SelectItem key={lang.value} value={lang.value}>
+                {lang.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="text-center space-y-3">
         <h1 className="text-3xl font-semibold text-[#011A2E] ml-4">
           Heller Industries
