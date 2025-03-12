@@ -1,10 +1,21 @@
-// API client for Heller backend
+// API client for Heller backend with chat history support
 export interface ApiResponse {
   answer: string;
   sources: Record<string, { page: number; relevance: number }[]>;
+  conversation_id: string; // Added to store the conversation ID
 }
 
+// Keep track of the current conversation
+let currentConversationId: string | null = null;
+
 export async function queryHellerApi(question: string): Promise<ApiResponse> {
+  // Prepare the request body including conversation_id if available
+  const requestBody = {
+    question,
+    top_k: 5,
+    ...(currentConversationId && { conversation_id: currentConversationId }),
+  };
+
   // Try different request configurations if the first one fails
   const configs: RequestInit[] = [
     // Standard configuration
@@ -12,8 +23,8 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-      } as Record<string, string>, // Ensure headers conform to HeadersInit
-      body: JSON.stringify({ question }),
+      } as Record<string, string>,
+      body: JSON.stringify(requestBody),
     },
     // Configuration with CORS settings
     {
@@ -22,7 +33,7 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
         "Content-Type": "application/json",
         Accept: "application/json",
       } as Record<string, string>,
-      body: JSON.stringify({ question }),
+      body: JSON.stringify(requestBody),
       mode: "cors",
       credentials: "omit",
     },
@@ -32,7 +43,7 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
       headers: {
         "Content-Type": "text/plain",
       } as Record<string, string>,
-      body: JSON.stringify({ question }),
+      body: JSON.stringify(requestBody),
     },
   ];
 
@@ -42,11 +53,7 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
   for (const config of configs) {
     try {
       console.log(`Trying API request with config:`, config);
-      // Fix the API endpoint URL - changed from /query/chat to /chat/query
-      const response = await fetch(
-        "https://heller-proto-backend.onrender.com/chat/query",
-        config
-      );
+      const response = await fetch("http://localhost:8000/chat/query", config);
 
       if (!response.ok) {
         const errorText = await response
@@ -62,9 +69,15 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
       const data = await response.json();
       console.log("API response successful:", data);
 
+      // Store the conversation ID for future requests
+      if (data.conversation_id) {
+        currentConversationId = data.conversation_id;
+      }
+
       return {
         answer: data.answer || "No answer provided by the API.",
         sources: data.sources || {},
+        conversation_id: data.conversation_id || null,
       };
     } catch (error) {
       console.warn("API request failed:", error);
@@ -78,4 +91,10 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
     lastError ||
     new Error("Failed to fetch response after trying all configurations")
   );
+}
+
+// Function to start a new conversation
+export function startNewConversation(): void {
+  currentConversationId = null;
+  console.log("Started a new conversation");
 }
