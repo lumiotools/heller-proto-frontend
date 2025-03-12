@@ -53,7 +53,10 @@ export async function queryHellerApi(question: string): Promise<ApiResponse> {
   for (const config of configs) {
     try {
       console.log(`Trying API request with config:`, config);
-      const response = await fetch("http://localhost:8000/chat/query", config);
+      const response = await fetch(
+        "https://heller-proto-backend.onrender.com/chat/query",
+        config
+      );
 
       if (!response.ok) {
         const errorText = await response

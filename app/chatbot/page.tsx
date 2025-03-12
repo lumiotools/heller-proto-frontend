@@ -10,11 +10,21 @@ import {
   ExternalLink,
   FileText,
   AlertTriangle,
+  Search,
+  Lightbulb,
+  Settings,
+  Globe,
+  RefreshCw,
+  Brain,
+  TrendingUp,
+  Leaf,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+// Update the import for the chatbotapi to use the new interface
 import { queryHellerApi } from "@/lib/chatbotapi";
 
 // Links array from your data
@@ -114,6 +124,9 @@ export default function ChatInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"insights" | "trends" | "search">(
+    "insights"
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -123,6 +136,7 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages]);
 
+  // Update the handleSubmit function to handle the conversation_id from the API response
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -184,9 +198,17 @@ export default function ChatInterface() {
     adjustTextareaHeight();
   }, [input]);
 
+  const handleQuestionClick = (question: string) => {
+    setInput(question);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  };
+
+  // Modify the return statement to conditionally show the input area
   return (
     <ErrorBoundary>
-      <div className="h-[calc(100vh-4rem)] relative w-full flex flex-col bg-[#E6F3F9]">
+      <div className="h-[calc(100vh-4rem)] relative w-full flex flex-col bg-white">
         {/* Main chat container */}
         <div
           ref={chatContainerRef}
@@ -194,35 +216,277 @@ export default function ChatInterface() {
         >
           {messages.length === 0 ? (
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              <div className="text-center space-y-6 max-w-md mx-auto p-8">
+              <div className="text-center space-y-6 w-full mx-auto p-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#00AFFF] shadow-sm">
                   <Zap className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-[#0083BF]">
+                <h3 className="text-2xl font-semibold text-[#00AFFF]">
                   Heller Technical Assistant
                 </h3>
-                <p className="text-[#011A2E66]">
+                <p className="text-black text-sm">
                   Ask me anything about Heller flux reactors, maintenance
                   procedures, or technical specifications.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4">
-                  {[
-                    "How do I maintain a flux reactor?",
-                    "What are the safety procedures?",
-                    "Tell me about catalyst removal",
-                  ].map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      className="text-left px-4 py-2 bg-[#0083BF1A] hover:bg-blue-200 rounded-md text-[#011A2E]transition-colors"
-                      onClick={() => {
-                        setInput(suggestion);
-                        textareaRef.current?.focus();
-                      }}
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
+
+                {/* Category buttons */}
+                <div className="flex gap-4 justify-center mt-10 w-full">
+                  <button
+                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
+                      activeTab === "insights"
+                        ? "bg-[#E6F7FF] border-[#0083BF] border"
+                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
+                    }`}
+                    onClick={() => setActiveTab("insights")}
+                  >
+                    Heller Insights
+                  </button>
+                  <button
+                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
+                      activeTab === "trends"
+                        ? "bg-[#E6F7FF] border-[#0083BF] border"
+                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
+                    }`}
+                    onClick={() => setActiveTab("trends")}
+                  >
+                    Explore Trends
+                  </button>
+                  <button
+                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
+                      activeTab === "search"
+                        ? "bg-[#E6F7FF] border-[#0083BF] border"
+                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
+                    }`}
+                    onClick={() => setActiveTab("search")}
+                  >
+                    Search & Discover
+                  </button>
                 </div>
+
+                {/* Content based on active tab */}
+                {activeTab === "insights" && (
+                  <div className="mt-8">
+                    <h2 className="text-base text-[#545454] font-medium mb-6 mt-12">
+                      Discover Heller Insights to Power Your Decisions
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* Card 1 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Lightbulb className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Industry Innovations
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Heller&apos;s Mark 7 Series achieves a 40% reduction
+                          in nitrogen consumption.
+                        </p>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Settings className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Smart Manufacturing
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Industry 4.0 integration enables real-time process
+                          monitoring.
+                        </p>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <RefreshCw className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Sustainability in Production
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Energy-efficient reflow ovens reduce carbon footprint.
+                        </p>
+                      </div>
+
+                      {/* Card 4 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Globe className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Global Expansion Strategies
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Manufacturing shift from China to Korea to optimize
+                          tariffs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "trends" && (
+                  <div className="mt-8">
+                    <h2 className="text-base text-[#545454] font-medium mb-6">
+                      Stay Ahead with Emerging Trends in Manufacturing &
+                      Technology
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* Card 1 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Brain className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          AI-Driven Optimization
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Discover how artificial intelligence is
+                          revolutionizing manufacturing efficiency.
+                        </p>
+                        <button
+                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
+                          onClick={() =>
+                            handleQuestionClick(
+                              "Tell me about AI-Driven Optimization in manufacturing"
+                            )
+                          }
+                        >
+                          Explore More
+                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
+                        </button>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <TrendingUp className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          The Rise of Industry 4.0
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Explore the shift toward smart factories and connected
+                          production lines.
+                        </p>
+                        <button
+                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
+                          onClick={() =>
+                            handleQuestionClick(
+                              "Explain Industry 4.0 and smart manufacturing"
+                            )
+                          }
+                        >
+                          Explore More
+                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
+                        </button>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Leaf className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Sustainability & Green Manufacture
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Understand the latest sustainability initiatives
+                          shaping the industry.
+                        </p>
+                        <button
+                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
+                          onClick={() =>
+                            handleQuestionClick(
+                              "What are the sustainability initiatives in manufacturing?"
+                            )
+                          }
+                        >
+                          Explore More
+                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
+                        </button>
+                      </div>
+
+                      {/* Card 4 */}
+                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
+                          <Package className="w-6 h-6 text-[#00AFFF]" />
+                        </div>
+                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
+                          Global Supply Chain Adaptations
+                        </h3>
+                        <p className="text-[#011A2E99] text-sm mb-4">
+                          Learn how manufacturers are adapting to global
+                          economic shifts.
+                        </p>
+                        <button
+                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
+                          onClick={() =>
+                            handleQuestionClick(
+                              "How are global supply chains changing in manufacturing?"
+                            )
+                          }
+                        >
+                          Explore More
+                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "search" && (
+                  <div className="mt-8">
+                    {/* Search bar */}
+                    <div className="flex gap-2 mb-8 items-center">
+                      <div className="relative flex-grow">
+                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                          <Search className="w-5 h-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AFFF] focus:border-transparent"
+                          placeholder="Ask anything about Heller Industries..."
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSubmit(e);
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        className="bg-[#00AFFF] hover:bg-[#0083BF] text-sm text-white px-6 py-6 rounded-md"
+                        onClick={(e) => handleSubmit(e)}
+                      >
+                        Search
+                      </Button>
+                    </div>
+
+                    <h2 className="text-base text-[#545454] font-medium mb-6">
+                      Discover & Get Instant Answers to Key Questions
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {[
+                        "How can I improve efficiency in reflow soldering?",
+                        "How does Heller support Industry 4.0 smart manufacturing?",
+                        "What are cost-saving strategies in electronics manufacturing?",
+                        "How are supply chain shifts affecting the industry?",
+                      ].map((question) => (
+                        <button
+                          key={question}
+                          className="text-left p-4 border border-gray-200 rounded-lg hover:border-[#00AFFF] hover:bg-[#E6F7FF] transition-colors"
+                          onClick={() => handleQuestionClick(question)}
+                        >
+                          <p className="text-[#011A2E]">{question}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -381,33 +645,35 @@ export default function ChatInterface() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
-        <div className="p-4 md:p-6">
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-            <div className="relative">
-              <Textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about flux reactors, maintenance procedures, or technical specifications..."
-                className="pr-12 min-h-[60px] max-h-[150px] resize-none border-blue-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
-                disabled={isLoading}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                className={cn(
-                  "absolute right-3 bottom-3 h-9 w-9 rounded-md bg-[#08ACF7] hover:bg-blue-700 transition-colors",
-                  isLoading && "opacity-50 cursor-not-allowed"
-                )}
-                disabled={isLoading}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </form>
-        </div>
+        {/* Input area - only show when messages exist */}
+        {messages.length > 0 && (
+          <div className="p-4 md:p-6">
+            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+              <div className="relative">
+                <Textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask about flux reactors, maintenance procedures, or technical specifications..."
+                  className="pr-12 min-h-[60px] max-h-[150px] resize-none border-blue-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                  disabled={isLoading}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  className={cn(
+                    "absolute right-3 bottom-3 h-9 w-9 rounded-md bg-[#08ACF7] hover:bg-blue-700 transition-colors",
+                    isLoading && "opacity-50 cursor-not-allowed"
+                  )}
+                  disabled={isLoading}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );
