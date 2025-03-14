@@ -1,680 +1,256 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import React from "react";
-
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import ChatInterface from "../ui/chat-interface";
+import SearchResults from "../ui/search-results";
 import {
-  Send,
-  Zap,
-  ChevronDown,
-  ExternalLink,
-  FileText,
-  AlertTriangle,
-  Search,
-  Lightbulb,
-  Settings,
-  Globe,
-  RefreshCw,
-  Brain,
-  TrendingUp,
-  Leaf,
-  Package,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-// Update the import for the chatbotapi to use the new interface
-import { queryHellerApi } from "@/lib/chatbotapi";
+  queryHellerApi,
+  startNewConversation,
+  getAllSearchHistory,
+  getSearchResults,
+  type ApiResponse,
+  type ChatHistoryMessage,
+} from "@/lib/chatbotapi";
 
-// Links array from your data
-const linksArray = [
-  {
-    filename: "2043MK7 System User Manual - Flux Reactor Maintenance.pdf",
-    link: "https://drive.google.com/file/d/1mMNbQBWnw-ejenPIXYpwPI0hMVWvPC6n/view?usp=sharing",
-  },
-  {
-    filename: "848861 REACTOR UPGRADE TEST Retrofit (R2).xlsx",
-    link: "https://docs.google.com/spreadsheets/d/1I4rKI4aEW6XXjQ6PuX2JY-1tOJBSSe8W/edit?usp=sharing&ouid=111377379083910385195&rtpof=true&sd=true",
-  },
-  {
-    filename: "854508 Reactor Catalyst Remove Retrofit (R1).xls",
-    link: "https://docs.google.com/spreadsheets/d/1raFr_s729zOelX32wUEyoRogoFW7iLzy/edit?usp=sharing&ouid=111377379083910385195&rtpof=true&sd=true",
-  },
-  {
-    filename: "4177290 (rev. A).pdf",
-    link: "https://drive.google.com/file/d/1Njp7QsRF3AwoEu9DbQTO22UIizWVJ_gF/view?usp=sharing",
-  },
-  {
-    filename: "4188290 (rev. A).pdf",
-    link: "https://drive.google.com/file/d/1iLM2FgaNWjrF4pEBb3zRx542VjjZtrtO/view?usp=sharing",
-  },
-  {
-    filename:
-      "4196387-Instructions  for Reactor Upgrade Retrofit (A)_RFC-355.pdf",
-    link: "https://drive.google.com/file/d/1HaCNL5PmP6ONPtNL0jcYr7rHVm6o3X2B/view?usp=sharing",
-  },
-  {
-    filename:
-      "4224364-Instruction  For Reactor Catalyst Remove Retrofit(A).pdf",
-    link: "https://drive.google.com/file/d/156qAD4F-I8HzQ1uVSHDpbDKG0VuWdlJd/view?usp=sharing",
-  },
-  {
-    filename: "ALPHA zeolite and catalyst (7-26-22) abridged.pdf",
-    link: "https://drive.google.com/file/d/1WOlwn2_2vwFbvGIxIg3ow6AbX2dTOaPt/view?usp=sharing",
-  },
-  {
-    filename: "Heller Flux Reactor Overview (4-11-23).pdf",
-    link: "https://drive.google.com/file/d/1c_uoS2NBQ5C87samRf5yE0pIz1WGGiXz/view?usp=sharing",
-  },
-  {
-    filename:
-      "Reactor Return Gas into Big Flux box Test with Heat Exchanger Water OFF (RFC355).pdf",
-    link: "https://drive.google.com/file/d/1aIQC2PZejl6RDHF9ewY1ymgVj_-sL5Ye/view?usp=sharing",
-  },
-  {
-    filename:
-      "RFC-355  Reactor Catalyst Upgrade And Return Gas Into Flux Box.pdf",
-    link: "https://drive.google.com/file/d/1PxlqRdSr4fqqlTKkxiIaophIfkIRDSld/view?usp=sharing",
-  },
-];
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  sources?: Record<string, { page: number; relevance: number }[]>;
-}
-
-// Error Boundary Component
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-6 rounded-lg bg-red-50 border border-red-200 text-red-800">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <h2 className="text-lg font-semibold">Something went wrong</h2>
-          </div>
-          <p>Please try again, server is busy.</p>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+// Update the Home component to maintain search history across searches
+export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+  // Update the searchResults state to use proper type
+  const [searchResults, setSearchResults] = useState<ApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<"insights" | "trends" | "search">(
-    "insights"
+  const [showChat, setShowChat] = useState(false);
+  const [view, setView] = useState<"landing" | "search-results" | "chat">(
+    "landing"
+  );
+  // Add a state to track search history
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  // Add a state to store all search data in memory
+  // Update the searchData state to use proper type
+  interface SearchDataItem {
+    results: ApiResponse;
+    chatHistory: ChatHistoryMessage[];
+    timestamp: number;
+  }
+
+  const [searchData, setSearchData] = useState<Record<string, SearchDataItem>>(
+    {}
   );
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Load search history and data from localStorage on initial load
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Load search history
+    const history = getAllSearchHistory();
+    if (history.length > 0) {
+      setSearchHistory(history.map((item) => item.query));
 
-  // Update the handleSubmit function to handle the conversation_id from the API response
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+      // Also load all search data into state
+      const searchDataObj: Record<string, SearchDataItem> = {};
+      history.forEach((item) => {
+        const savedData = getSearchResults(item.query);
+        if (savedData) {
+          searchDataObj[item.query] = {
+            results: savedData.results,
+            chatHistory: savedData.chatHistory || [],
+            timestamp: savedData.timestamp,
+          };
+        }
+      });
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-    };
+      setSearchData(searchDataObj);
+    }
+  }, []);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+  // Update the handleSearch function to store data in state
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) return;
+
+    // Check if we already have this search in our state
+    if (searchData[query]) {
+      setSearchQuery(query);
+      setSearchResults(searchData[query].results);
+      setView("search-results");
+
+      // Update search history order
+      setSearchHistory((prev) => {
+        const filteredHistory = prev.filter((item) => item !== query);
+        return [query, ...filteredHistory.slice(0, 9)];
+      });
+      return;
+    }
+
+    // Set loading immediately
     setIsLoading(true);
+    setSearchQuery(query);
+    // Change view to search-results to show loading screen
+    setView("search-results");
 
     try {
-      const data = await queryHellerApi(input);
+      // Start a new conversation for each new search
+      startNewConversation();
+      const result = await queryHellerApi(query);
+      setSearchResults(result);
 
-      const botMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: data.answer,
-        sources: data.sources,
-      };
+      // Store in our state
+      setSearchData((prev) => ({
+        ...prev,
+        [query]: {
+          results: result,
+          chatHistory: [],
+          timestamp: Date.now(),
+        },
+      }));
 
-      setMessages((prev) => [...prev, botMessage]);
+      // Update search history
+      setSearchHistory((prev) => {
+        // Remove the query if it already exists to avoid duplicates
+        const filteredHistory = prev.filter((item) => item !== query);
+        // Add the new query at the beginning
+        return [query, ...filteredHistory.slice(0, 9)];
+      });
     } catch (error) {
-      console.error("Error fetching response:", error);
-
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "Please try again, server is busy.",
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error("Search error:", error);
+      // If there's an error, still show chat interface with error message
+      setShowChat(true);
+      setView("chat");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+  // Update the handleHistoryItemClick function to properly handle history clicks
+  const handleHistoryItemClick = (historyQuery: string) => {
+    // First check our in-memory state
+    if (searchData[historyQuery]) {
+      setSearchQuery(historyQuery);
+      setSearchResults(searchData[historyQuery].results);
+      setView("search-results");
+
+      // Update search history order
+      // setSearchHistory((prev) => {
+      //   const filteredHistory = prev.filter((item) => item !== historyQuery);
+      //   return [historyQuery, ...filteredHistory];
+      // });
+      return;
+    }
+
+    // If not in memory, check localStorage
+    const savedData = getSearchResults(historyQuery);
+
+    if (savedData) {
+      // Use the saved results instead of making a new API call
+      setSearchQuery(historyQuery);
+      setSearchResults(savedData.results);
+
+      // Also update our in-memory state
+      setSearchData((prev) => ({
+        ...prev,
+        [historyQuery]: {
+          results: savedData.results,
+          chatHistory: savedData.chatHistory || [],
+          timestamp: savedData.timestamp,
+        },
+      }));
+
+      setView("search-results");
+
+      // Update search history order
+      setSearchHistory((prev) => {
+        const filteredHistory = prev.filter((item) => item !== historyQuery);
+        return [historyQuery, ...filteredHistory];
+      });
+    } else {
+      // If no saved results, make a new search
+      handleSearch(historyQuery);
     }
   };
 
-  const adjustTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        150
-      )}px`;
+  // Update the handleWantMoreInfo function to not change the view
+  const handleWantMoreInfo = (wantMore: boolean) => {
+    if (!wantMore) {
+      // Reset for a new search
+      setSearchResults(null);
+      setSearchQuery("");
+      setView("landing");
     }
+    // We no longer need to set showChat or change view here
+    // The chat functionality is now embedded in the search results component
   };
 
+  // Update the handleBackToLanding function to go directly to search tab
+  const handleBackToLanding = () => {
+    setView("landing");
+    setSearchResults(null);
+    setSearchQuery("");
+    setShowChat(false);
+    // Don't clear search history when going back to landing
+
+    // Set a flag to indicate we should show the search tab
+    sessionStorage.setItem("showSearchTab", "true");
+  };
+
+  // Add a useEffect to check if we should show the search tab
   useEffect(() => {
-    adjustTextareaHeight();
-  }, [input]);
+    if (view === "landing") {
+      const shouldShowSearch = sessionStorage.getItem("showSearchTab");
+      if (shouldShowSearch === "true") {
+        // Clear the flag
+        sessionStorage.removeItem("showSearchTab");
 
-  const handleQuestionClick = (question: string) => {
-    setInput(question);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+        // Find the ChatInterface component and set its activeTab to "search"
+        const chatInterface = document.querySelector("[data-active-tab]");
+        if (chatInterface) {
+          chatInterface.setAttribute("data-active-tab", "search");
+        }
+      }
     }
-  };
+  }, [view]);
 
-  // Modify the return statement to conditionally show the input area
   return (
-    <ErrorBoundary>
-      <div className="h-[calc(100vh-4rem)] relative w-full flex flex-col bg-white">
-        {/* Main chat container */}
-        <div
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-4 md:p-6 mt-2"
-        >
-          {messages.length === 0 ? (
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
-              <div className="text-center space-y-6 w-full mx-auto p-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#00AFFF] shadow-sm">
-                  <Zap className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-2xl font-semibold text-[#00AFFF]">
-                  Heller Technical Assistant
-                </h3>
-                <p className="text-black text-sm">
-                  Ask me anything about Heller flux reactors, maintenance
-                  procedures, or technical specifications.
-                </p>
-
-                {/* Category buttons */}
-                <div className="flex gap-4 justify-center mt-10 w-full">
-                  <button
-                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
-                      activeTab === "insights"
-                        ? "bg-[#E6F7FF] border-[#0083BF] border"
-                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
-                    }`}
-                    onClick={() => setActiveTab("insights")}
-                  >
-                    Heller Insights
-                  </button>
-                  <button
-                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
-                      activeTab === "trends"
-                        ? "bg-[#E6F7FF] border-[#0083BF] border"
-                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
-                    }`}
-                    onClick={() => setActiveTab("trends")}
-                  >
-                    Explore Trends
-                  </button>
-                  <button
-                    className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
-                      activeTab === "search"
-                        ? "bg-[#E6F7FF] border-[#0083BF] border"
-                        : "bg-[#F5FBFF] hover:bg-[#E6F7FF]"
-                    }`}
-                    onClick={() => setActiveTab("search")}
-                  >
-                    Search & Discover
-                  </button>
-                </div>
-
-                {/* Content based on active tab */}
-                {activeTab === "insights" && (
-                  <div className="mt-8">
-                    <h2 className="text-base text-[#545454] font-medium mb-6 mt-12">
-                      Discover Heller Insights to Power Your Decisions
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {/* Card 1 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Lightbulb className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Industry Innovations
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Heller&apos;s Mark 7 Series achieves a 40% reduction
-                          in nitrogen consumption.
-                        </p>
-                      </div>
-
-                      {/* Card 2 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Settings className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Smart Manufacturing
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Industry 4.0 integration enables real-time process
-                          monitoring.
-                        </p>
-                      </div>
-
-                      {/* Card 3 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <RefreshCw className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Sustainability in Production
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Energy-efficient reflow ovens reduce carbon footprint.
-                        </p>
-                      </div>
-
-                      {/* Card 4 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Globe className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Global Expansion Strategies
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Manufacturing shift from China to Korea to optimize
-                          tariffs.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "trends" && (
-                  <div className="mt-8">
-                    <h2 className="text-base text-[#545454] font-medium mb-6">
-                      Stay Ahead with Emerging Trends in Manufacturing &
-                      Technology
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {/* Card 1 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Brain className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          AI-Driven Optimization
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Discover how artificial intelligence is
-                          revolutionizing manufacturing efficiency.
-                        </p>
-                        <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
-                          onClick={() =>
-                            handleQuestionClick(
-                              "Tell me about AI-Driven Optimization in manufacturing"
-                            )
-                          }
-                        >
-                          Explore More
-                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
-                        </button>
-                      </div>
-
-                      {/* Card 2 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <TrendingUp className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          The Rise of Industry 4.0
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Explore the shift toward smart factories and connected
-                          production lines.
-                        </p>
-                        <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
-                          onClick={() =>
-                            handleQuestionClick(
-                              "Explain Industry 4.0 and smart manufacturing"
-                            )
-                          }
-                        >
-                          Explore More
-                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
-                        </button>
-                      </div>
-
-                      {/* Card 3 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Leaf className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Sustainability & Green Manufacture
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Understand the latest sustainability initiatives
-                          shaping the industry.
-                        </p>
-                        <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
-                          onClick={() =>
-                            handleQuestionClick(
-                              "What are the sustainability initiatives in manufacturing?"
-                            )
-                          }
-                        >
-                          Explore More
-                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
-                        </button>
-                      </div>
-
-                      {/* Card 4 */}
-                      <div className="border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 rounded-full bg-[#E6F7FF] flex items-center justify-center mb-4">
-                          <Package className="w-6 h-6 text-[#00AFFF]" />
-                        </div>
-                        <h3 className="text-lg font-medium text-[#011A2E] mb-2">
-                          Global Supply Chain Adaptations
-                        </h3>
-                        <p className="text-[#011A2E99] text-sm mb-4">
-                          Learn how manufacturers are adapting to global
-                          economic shifts.
-                        </p>
-                        <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-auto"
-                          onClick={() =>
-                            handleQuestionClick(
-                              "How are global supply chains changing in manufacturing?"
-                            )
-                          }
-                        >
-                          Explore More
-                          <ChevronDown className="w-4 h-4 ml-1 rotate-[-90deg]" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === "search" && (
-                  <div className="mt-8">
-                    {/* Search bar */}
-                    <div className="flex gap-2 mb-8 items-center">
-                      <div className="relative flex-grow">
-                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                          <Search className="w-5 h-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="text"
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AFFF] focus:border-transparent"
-                          placeholder="Ask anything about Heller Industries..."
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleSubmit(e);
-                            }
-                          }}
-                        />
-                      </div>
-                      <Button
-                        className="bg-[#00AFFF] hover:bg-[#0083BF] text-sm text-white px-6 py-6 rounded-md"
-                        onClick={(e) => handleSubmit(e)}
-                      >
-                        Search
-                      </Button>
-                    </div>
-
-                    <h2 className="text-base text-[#545454] font-medium mb-6">
-                      Discover & Get Instant Answers to Key Questions
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {[
-                        "How can I improve efficiency in reflow soldering?",
-                        "How does Heller support Industry 4.0 smart manufacturing?",
-                        "What are cost-saving strategies in electronics manufacturing?",
-                        "How are supply chain shifts affecting the industry?",
-                      ].map((question) => (
-                        <button
-                          key={question}
-                          className="text-left p-4 border border-gray-200 rounded-lg hover:border-[#00AFFF] hover:bg-[#E6F7FF] transition-colors"
-                          onClick={() => handleQuestionClick(question)}
-                        >
-                          <p className="text-[#011A2E]">{question}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6 max-w-4xl mx-auto">
-              {messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "transform transition-all duration-300",
-                    index === messages.length - 1 && "animate-message-appear"
-                  )}
-                >
-                  {/* Message component */}
-                  <div
-                    className={cn(
-                      "flex items-start gap-3 max-w-full",
-                      message.role === "user" ? "justify-end" : ""
-                    )}
-                  >
-                    {message.role === "assistant" && (
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#0083bf]">
-                        <span className="text-white font-medium">H</span>
-                      </div>
-                    )}
-
-                    <div
-                      className={cn(
-                        "max-w-[80%]",
-                        message.role === "user" ? "order-1" : "order-2"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "p-3 rounded-lg",
-                          message.role === "user"
-                            ? "bg-[#0083BF1A] text-[#005d88] rounded-tr-none"
-                            : "bg-white border border-blue-100 text-black rounded-tl-none"
-                        )}
-                      >
-                        <div className="prose max-w-none break-words">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
-                        </div>
-                      </div>
-                    </div>
-
-                    {message.role === "user" && (
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#0083BF1A] order-2">
-                        <span className="text-[#005d88] font-medium">U</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Sources component */}
-                  {message.role === "assistant" && message.sources && (
-                    <div className="mt-2 ml-13">
-                      <div className="flex items-center gap-2 text-sm text-blue-700 mb-1 ml-10">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-[#004869] hover:bg-blue-100 transition-colors"
-                          onClick={() => {
-                            const sourcesEl = document.getElementById(
-                              `sources-${message.id}`
-                            );
-                            if (sourcesEl) {
-                              sourcesEl.classList.toggle("hidden");
-                            }
-                          }}
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1.5" />
-                          <span className="mr-1">Sources</span>
-                          <ChevronDown className="h-3 w-3" />
-                        </Button>
-                      </div>
-
-                      <div
-                        id={`sources-${message.id}`}
-                        className="hidden pl-2 border-l-2 border-blue-300 space-y-2 ml-10"
-                      >
-                        {Object.entries(message.sources).map(
-                          ([filename, pages], index) => {
-                            // Find the link for this filename
-                            const linkInfo = linksArray.find(
-                              (item) =>
-                                item.filename
-                                  .toLowerCase()
-                                  .includes(filename.toLowerCase()) ||
-                                filename
-                                  .toLowerCase()
-                                  .includes(item.filename.toLowerCase())
-                            );
-
-                            // Sort pages by relevance
-                            const sortedPages = [...pages].sort(
-                              (a, b) => b.relevance - a.relevance
-                            );
-
-                            return (
-                              <div key={index} className="text-sm">
-                                <a
-                                  href={linkInfo?.link || "#"}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-start gap-1 hover:text-blue-800 text-[#0077ae] group transition-colors"
-                                >
-                                  <ExternalLink className="h-3 w-3 mt-1 flex-shrink-0 opacity-70 group-hover:opacity-100" />
-                                  <div>
-                                    <span className="font-medium">
-                                      {filename}
-                                    </span>
-                                    <span className="text-[#0083bf] ml-1">
-                                      (Page{sortedPages.length > 1 ? "s" : ""}{" "}
-                                      {sortedPages
-                                        .map((p) => Math.round(p.page))
-                                        .join(", ")}
-                                      )
-                                    </span>
-                                  </div>
-                                </a>
-                              </div>
-                            );
-                          }
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Loading indicator */}
-              {isLoading && (
-                <div className="flex items-start gap-3 animate-message-appear">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#0083bf]">
-                    <span className="text-white font-medium">H</span>
-                  </div>
-                  <div className="p-3 ">
-                    <div className="flex space-x-2">
-                      <div
-                        className="w-2 h-2 bg-[#08ACF7] rounded-full animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-[#08ACF7] rounded-full animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-[#08ACF7] rounded-full animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input area - only show when messages exist */}
-        {messages.length > 0 && (
-          <div className="p-4 md:p-6">
-            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-              <div className="relative">
-                <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about flux reactors, maintenance procedures, or technical specifications..."
-                  className="pr-12 min-h-[60px] max-h-[150px] resize-none border-blue-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
-                  disabled={isLoading}
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  className={cn(
-                    "absolute right-3 bottom-3 h-9 w-9 rounded-md bg-[#08ACF7] hover:bg-blue-700 transition-colors",
-                    isLoading && "opacity-50 cursor-not-allowed"
-                  )}
-                  disabled={isLoading}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-      </div>
-    </ErrorBoundary>
+    <div className="min-h-[calc(100vh-4rem)] relative bg-white">
+      {view === "search-results" ? (
+        // Update the handleUpdateChatHistory function type in the SearchResults component
+        <SearchResults
+          query={searchQuery}
+          results={searchResults}
+          onWantMoreInfo={handleWantMoreInfo}
+          onBackToLanding={handleBackToLanding}
+          isLoading={isLoading}
+          searchHistory={searchHistory}
+          onSearch={handleHistoryItemClick}
+          onUpdateChatHistory={(
+            query: string,
+            messages: ChatHistoryMessage[]
+          ) => {
+            setSearchData((prev) => ({
+              ...prev,
+              [query]: {
+                ...prev[query],
+                chatHistory: messages,
+                timestamp: Date.now(),
+              },
+            }));
+          }}
+        />
+      ) : view === "chat" ? (
+        <ChatInterface
+          initialSearchQuery={searchQuery}
+          initialSearchResults={searchResults}
+          showChatMode={true}
+          onSearch={handleSearch}
+          onBackToResults={() => setView("search-results")}
+          onBackToLanding={handleBackToLanding}
+          isLoading={isLoading}
+        />
+      ) : (
+        <ChatInterface
+          initialSearchQuery=""
+          initialSearchResults={null}
+          showChatMode={false}
+          onSearch={handleSearch}
+          isLoading={isLoading}
+        />
+      )}
+    </div>
   );
 }
