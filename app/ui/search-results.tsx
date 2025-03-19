@@ -363,12 +363,7 @@ export default function SearchResults({
         </div> */}
         <div
           className="flex items-center text-[#0083BF] cursor-pointer"
-          onClick={() => {
-            if (searchInputRef.current) {
-              searchInputRef.current.value = "";
-              searchInputRef.current.focus();
-            }
-          }}
+          onClick={onBackToLanding}
         >
           <div className="h-6 mr-2 mt-4"></div>
           <div className="flex items-center gap-1">
@@ -405,29 +400,7 @@ export default function SearchResults({
                     onSearch(searchInput.value);
                   }
                 }}
-              >
-                <div className="relative flex items-center gap-2">
-                  <div className="relative flex items-center w-full">
-                    <Search className="absolute left-3 h-5 w-5 text-gray-400" />
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AFFF] focus:border-transparent"
-                      placeholder="Ask anything about Heller Industries..."
-                      defaultValue=""
-                      onClick={(e) => (e.currentTarget.value = "")}
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      type="submit"
-                      className="bg-[#009FE8] hover:bg-[#0083BF] font-semibold text-sm text-white px-6 py-5 rounded-md"
-                    >
-                      Search
-                    </Button>
-                  </div>
-                </div>
-              </form>
+              ></form>
             </div>
           </div>
         </div>
