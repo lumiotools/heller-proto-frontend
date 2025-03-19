@@ -88,7 +88,7 @@ export async function queryHellerApi(
     try {
       console.log(`Trying API request with config:`, config);
       const response = await fetch(
-        "https://heller-proto-backend.onrender.com/chat/query",
+        "https://heller-proto-backend-j9yd.onrender.com/chat/query",
         config
       );
 
