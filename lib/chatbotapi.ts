@@ -1,7 +1,10 @@
 // API client for Heller backend with chat history support
 export interface ApiResponse {
   answer: string;
-  sources: Record<string, { page: number; relevance: number }[]>;
+  sources: Record<
+    string,
+    { page: number; relevance: number; text: string | "" }[]
+  >;
   conversation_id: string | null; // Allow conversation_id to be null
 }
 

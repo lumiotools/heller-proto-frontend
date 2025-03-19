@@ -2,7 +2,7 @@
 "use client";
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { Send, ChevronLeft, FileText, Search } from "lucide-react";
+import { Send, ChevronLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -259,7 +259,12 @@ export default function SearchResults({
 
   // Scroll to bottom of chat when new messages are added
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
   }, [chatMessages]);
 
   // Handle chat submission
@@ -323,10 +328,15 @@ export default function SearchResults({
 
   return (
     <div className="flex h-screen bg-white mt-8 ml-5">
-      {/* History Sidebar */}
-      <div className="w-64  p-4 hidden md:block">
-        <h2 className="text-lg font-semibold mb-4">History</h2>
-        <div className="space-y-2">
+      {/* History Sidebar - Fixed height with overflow-y-auto */}
+      <div
+        className="w-64 p-4 hidden md:block h-[calc(100vh-8rem)] overflow-y-auto"
+        style={{ scrollPaddingTop: "40px", scrollPaddingBottom: "60px" }}
+      >
+        <h2 className="text-lg font-semibold mb-4 sticky top-0 bg-white z-10 pb-2">
+          History
+        </h2>
+        <div className="space-y-2 pb-4">
           {searchHistory.length > 0 ? (
             searchHistory.map((item, index) => {
               // Check if this history item has chat history
@@ -338,8 +348,8 @@ export default function SearchResults({
                 <div
                   key={index}
                   className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm ${
-                    hasChatHistory ? "border-l-2 border-[#0083BF]" : ""
-                  } ${item === query ? "bg-gray-100 font-medium" : ""}`}
+                    item === query ? "bg-gray-100 font-medium" : ""
+                  }`}
                   onClick={() => onSearch(item)}
                 >
                   {item}
@@ -352,21 +362,11 @@ export default function SearchResults({
             </div>
           )}
         </div>
-        {/* <div className="mt-4">
-          <Button
-            variant="outline"
-            className="w-full text-sm"
-            onClick={onBackToLanding}
-          >
-            + Make New Search
-          </Button>
-        </div> */}
         <div
-          className="flex items-center text-[#0083BF] cursor-pointer"
+          className="flex items-center text-[#0083BF] cursor-pointer sticky bottom-0 bg-white"
           onClick={onBackToLanding}
         >
-          <div className="h-6 mr-2 mt-4"></div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 py-2">
             <span className="text-lg">+</span>
             <span className="text-base font-medium">Make New Search</span>
           </div>
@@ -406,7 +406,10 @@ export default function SearchResults({
         </div>
 
         {/* Content Area - Either Search Results or Chat */}
-        <div className="flex-1 overflow-auto">
+        <div
+          className="flex-1 overflow-auto"
+          style={{ height: "calc(100vh - 16rem)" }}
+        >
           {!showChat ? (
             // Search Results View
             <div className="max-w-4xl mx-auto p-6">
@@ -500,8 +503,12 @@ export default function SearchResults({
                         )}
                       >
                         {message.role === "assistant" && (
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#0083bf]">
-                            <span className="text-white font-medium">H</span>
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-white overflow-hidden border border-gray-200">
+                            <img
+                              src="/hellerLogo.png"
+                              alt="Heller Logo"
+                              className="w-8 h-8 object-contain"
+                            />
                           </div>
                         )}
 
@@ -553,8 +560,12 @@ export default function SearchResults({
                   {/* Loading indicator */}
                   {isChatLoading && (
                     <div className="flex items-start gap-3 animate-message-appear">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-[#0083bf]">
-                        <span className="text-white font-medium">H</span>
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-white overflow-hidden border border-gray-200">
+                        <img
+                          src="/hellerLogo.png"
+                          alt="Heller Logo"
+                          className="w-8 h-8 object-contain"
+                        />
                       </div>
                       <div className="p-3 ">
                         <div className="flex space-x-2">
