@@ -512,7 +512,7 @@ export default function ChatInterface({
                           revolutionizing manufacturing efficiency.
                         </p>
                         <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-2"
+                          className="hidden text-[#0083BF] font-semibold text-sm flex items-center mt-2"
                           onClick={() =>
                             handleExploreMore(
                               "Tell me about AI-Driven Optimization in manufacturing"
@@ -537,7 +537,7 @@ export default function ChatInterface({
                           production lines.
                         </p>
                         <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-2"
+                          className="hidden text-[#0083BF] font-semibold text-sm flex items-center mt-2"
                           onClick={() =>
                             handleExploreMore(
                               "Explain Industry 4.0 and smart manufacturing"
@@ -562,7 +562,7 @@ export default function ChatInterface({
                           shaping the industry.
                         </p>
                         <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-2"
+                          className="hidden text-[#0083BF] font-semibold text-sm flex items-center mt-2"
                           onClick={() =>
                             handleExploreMore(
                               "What are the sustainability initiatives in manufacturing?"
@@ -587,7 +587,7 @@ export default function ChatInterface({
                           economic shifts.
                         </p>
                         <button
-                          className="text-[#0083BF] font-semibold text-sm flex items-center mt-2"
+                          className="hidden text-[#0083BF] font-semibold text-sm flex items-center mt-2"
                           onClick={() =>
                             handleExploreMore(
                               "How are global supply chains changing in manufacturing?"
@@ -637,9 +637,9 @@ export default function ChatInterface({
                     <div className="flex flex-wrap gap-4 mt-8">
                       {[
                         "How can I improve efficiency in reflow soldering?",
-                        "How does Heller support Industry 4.0 smart manufacturing?",
-                        "What are cost-saving strategies in electronics manufacturing?",
-                        "How are supply chain shifts affecting the industry?",
+                        "What are the steps for Reactor Catalyst Removal Retrofit",
+                        "What is the purpose of the wire mesh trap in the flux reactor?",
+                        "How to loosen the reactor flange?",
                       ].map((question) => (
                         <button
                           key={question}
