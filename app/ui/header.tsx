@@ -3,10 +3,18 @@
 import { Button } from "@/components/ui/button";
 // import { Mic } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+
+  // Redirect to /chatbot if on the home page
+  useEffect(() => {
+    if (pathname === "/") {
+      router.push("/chatbot");
+    }
+  }, [pathname, router]);
 
   const flags = [
     {
@@ -64,6 +72,18 @@ export default function Navbar() {
 
       {/* Right section - ml-auto to push it to the right */}
       <div className="flex items-center gap-5 ml-auto">
+        {/* Technical Assistant Button */}
+        <Button
+          onClick={() => router.push("/chatbot")}
+          className={`px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 
+            ${
+              pathname === "/chatbot"
+                ? "text-white/90 border-white/10 bg-white/10 hover:bg-white/20"
+                : "text-white/90 bg-[#011A2E] hover:bg-white/10"
+            }`}
+        >
+          Assistant
+        </Button>
         {/* Dashboard Button */}
         <Button
           onClick={() => router.push("/")}
@@ -101,19 +121,6 @@ export default function Navbar() {
             }`}
         >
           Collect Data
-        </Button>
-
-        {/* Technical Assistant Button */}
-        <Button
-          onClick={() => router.push("/chatbot")}
-          className={`px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 
-            ${
-              pathname === "/chatbot"
-                ? "text-white/90 border-white/10 bg-white/10 hover:bg-white/20"
-                : "text-white/90 bg-[#011A2E] hover:bg-white/10"
-            }`}
-        >
-          Assistant
         </Button>
       </div>
     </nav>
