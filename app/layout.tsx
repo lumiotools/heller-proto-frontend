@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   description: "Advanced CAD analysis and design verification powered by AI",
   keywords: ["CAD", "AI", "Design", "Analysis", "Engineering"],
   authors: [{ name: "Your Name" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
   openGraph: {
     type: "website",
