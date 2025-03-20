@@ -32,8 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+// @ts-ignore
+import html2pdf from "html2pdf.js";
 import { sendColleagueEmail, sendResultsEmail } from "@/lib/sendEmail";
 
 // Update the interface to use proper types
@@ -116,32 +116,10 @@ const linksArray = [
   },
 ];
 
-// Custom CSS to properly render markdown
-const markdownStyles = `
-.markdown h1 { font-size: 2em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown h2 { font-size: 1.5em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown h3 { font-size: 1.17em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown h4 { font-size: 1em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown h5 { font-size: 0.83em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown h6 { font-size: 0.67em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
-.markdown strong { font-weight: bold; }
-.markdown em { font-style: italic; }
-.markdown ul { list-style-type: disc; padding-left: 2em; margin: 1em 0; }
-.markdown ol { list-style-type: decimal; padding-left: 2em; margin: 1em 0; }
-.markdown blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; margin: 1em 0; color: #4b5563; }
-.markdown pre { background-color: #f3f4f6; padding: 1em; border-radius: 0.375em; overflow-x: auto; margin: 1em 0; }
-.markdown code { font-family: monospace; background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25em; }
-.markdown a { color: #0083BF; text-decoration: underline; }
-.markdown table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-.markdown th, .markdown td { border: 1px solid #e5e7eb; padding: 0.5em; text-align: left; }
-.markdown th { background-color: #f9fafb; }
-`;
-
 // Improved formatAnswer function with proper markdown styling
 const formatAnswer = (answer: string) => {
   return (
     <div className="markdown prose max-w-none">
-      <style>{markdownStyles}</style>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
     </div>
   );
@@ -155,24 +133,19 @@ const isValidEmail = (email: string) => {
 };
 
 // Function to generate PDF
-const generatePDF = (content: string, filename: string) => {
-  const contentElement = document.getElementById(content);
+const generatePDF = (contentId: string, filename: string) => {
+  const contentElement = document.getElementById(contentId);
   if (!contentElement) return;
 
-  html2canvas(contentElement, {
-    scale: 1,
-    useCORS: true,
-    logging: false,
-  }).then((canvas) => {
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF("p", "mm", "a4");
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  const pdfOptions = {
+    margin: 10,
+    filename: filename,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  };
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(filename);
-  });
+  html2pdf().from(contentElement).set(pdfOptions).save();
 };
 
 // Component to display sources consistently
@@ -542,11 +515,11 @@ export default function SearchResults({
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5">
+    <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5 pt-6">
       {/* History Sidebar - Fixed height with overflow-y-auto */}
       {/* History Sidebar - Fixed to make history properly scrollable */}
       {/* History Sidebar - Properly fixed for scrolling */}
-      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-140px)] ">
+      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-120px)] ">
         {/* Fixed header */}
         <div className="p-4 pb-2 bg-white ">
           <h2 className="text-lg font-semibold">History</h2>
@@ -635,7 +608,7 @@ export default function SearchResults({
           {!showChat ? (
             // Search Results View
             <div className="max-w-4xl mx-auto p-6">
-              <h1 className="text-xl font-medium mb-6">
+              <h1 className="text-xl font-medium">
                 <span className="text-[#0083BF]">{query}</span>
               </h1>
 
@@ -800,7 +773,6 @@ export default function SearchResults({
                             )}
                           >
                             <div className="prose max-w-none break-words markdown">
-                              <style>{markdownStyles}</style>
                               {message.role === "assistant" ? (
                                 formatAnswer(message.content)
                               ) : (
