@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCw, Maximize } from "lucide-react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
@@ -23,6 +23,11 @@ interface PdfViewerModalProps {
   pdfUrl: string;
   pageNumber: number;
   snippet: string;
+}
+
+interface PageDetails {
+  width: number;
+  height: number;
 }
 
 export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
@@ -35,43 +40,95 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(pageNumber);
   const [scale, setScale] = useState(1);
-  const [containerWidth, setContainerWidth] = useState(800);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [pageDetails, setPageDetails] = useState<PageDetails | null>(null);
+  const [rotation, setRotation] = useState(0);
+  const [fitToWidth, setFitToWidth] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scaleWasSetRef = useRef(false);
 
+  // Reset when opening the modal
   useEffect(() => {
-    setCurrentPage(pageNumber);
-  }, [pageNumber]);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        // Leave some padding to avoid scrollbars
-        const newWidth = containerRef.current.clientWidth - 40;
-        setContainerWidth(newWidth);
-      }
-    };
-
-    // Initial set
-    updateWidth();
-
-    // Update on resize
-    const resizeObserver = new ResizeObserver(updateWidth);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
+    if (isOpen) {
+      setCurrentPage(pageNumber);
+      setRotation(0);
+      scaleWasSetRef.current = false;
     }
+  }, [isOpen, pageNumber]);
 
-    return () => {
+  // Update container dimensions when the dialog opens or resizes
+  useEffect(() => {
+    const updateContainerDimensions = () => {
       if (containerRef.current) {
-        resizeObserver.unobserve(containerRef.current);
+        const newWidth = containerRef.current.clientWidth - 40;
+        const newHeight = containerRef.current.clientHeight - 40;
+        setContainerWidth(newWidth);
+        setContainerHeight(newHeight);
       }
     };
+
+    if (isOpen) {
+      // Initial update
+      updateContainerDimensions();
+
+      // Add a small delay for the dialog animation to complete
+      const timer = setTimeout(updateContainerDimensions, 300);
+
+      // Add resize observer
+      const resizeObserver = new ResizeObserver(() => {
+        updateContainerDimensions();
+      });
+
+      if (containerRef.current) {
+        resizeObserver.observe(containerRef.current);
+      }
+
+      return () => {
+        clearTimeout(timer);
+        if (containerRef.current) {
+          resizeObserver.unobserve(containerRef.current);
+        }
+      };
+    }
   }, [isOpen]);
 
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-  }
+  // Handle fit to width calculation when needed
+  useEffect(() => {
+    if (
+      fitToWidth &&
+      pageDetails &&
+      containerWidth > 0 &&
+      !scaleWasSetRef.current
+    ) {
+      const newScale = containerWidth / pageDetails.width;
+      setScale(newScale);
+      scaleWasSetRef.current = true;
+    }
+  }, [fitToWidth, pageDetails, containerWidth]);
 
-  const customTextRenderer = (textItem: { str: string }) => {
+  // Document load success handler
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }): void => {
+    setNumPages(numPages);
+  };
+
+  // Page load success handler
+  const onPageLoadSuccess = (page: { width: number; height: number }): void => {
+    setPageDetails({
+      width: page.width,
+      height: page.height,
+    });
+
+    // Only set scale on initial load if we haven't done it yet
+    if (fitToWidth && containerWidth > 0 && !scaleWasSetRef.current) {
+      const newScale = containerWidth / page.width;
+      setScale(newScale);
+      scaleWasSetRef.current = true;
+    }
+  };
+
+  // Custom text renderer for highlighting search terms
+  const customTextRenderer = (textItem: { str: string }): string => {
     const { str } = textItem;
     if (!str) return str;
 
@@ -83,23 +140,59 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
     return str;
   };
 
-  const handlePageChange = (newPage: number) => {
+  // Navigation handlers
+  const handlePageChange = (newPage: number): void => {
     if (newPage >= 1 && newPage <= (numPages || 1)) {
       setCurrentPage(newPage);
     }
   };
 
-  const handleZoomIn = () => {
+  // Zoom handlers
+  const handleZoomIn = (): void => {
+    setFitToWidth(false);
+    scaleWasSetRef.current = true;
     setScale((prevScale) => Math.min(prevScale + 0.2, 3));
   };
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (): void => {
+    setFitToWidth(false);
+    scaleWasSetRef.current = true;
     setScale((prevScale) => Math.max(prevScale - 0.2, 0.5));
+  };
+
+  // Rotation handler
+  const handleRotate = (): void => {
+    setRotation((prevRotation) => (prevRotation + 90) % 360);
+    // Reset fit to width when rotating for better user experience
+    if (fitToWidth && pageDetails && containerWidth > 0) {
+      const isLandscape = rotation === 90 || rotation === 270;
+      const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
+      const newScale = containerWidth / pageWidth;
+      setScale(newScale);
+    }
+  };
+
+  // Fit to width handler
+  const handleFitToWidth = (): void => {
+    if (!pageDetails) return;
+
+    setFitToWidth(true);
+    scaleWasSetRef.current = false;
+
+    // Calculate based on rotation
+    const isLandscape = rotation === 90 || rotation === 270;
+    const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
+
+    if (containerWidth > 0) {
+      const newScale = containerWidth / pageWidth;
+      setScale(newScale);
+      scaleWasSetRef.current = true;
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-fit h-full overflow-hidden flex flex-col">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-[90vw] h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="shrink-0">
           <DialogTitle>Document Viewer</DialogTitle>
           <DialogDescription className="flex items-center justify-between">
@@ -116,12 +209,29 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
               <Button size="sm" variant="outline" onClick={handleZoomIn}>
                 <ZoomIn className="w-4 h-4" />
               </Button>
+              <Button size="sm" variant="outline" onClick={handleRotate}>
+                <RotateCw className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant={fitToWidth ? "default" : "outline"}
+                onClick={handleFitToWidth}
+              >
+                <Maximize className="w-4 h-4" />
+              </Button>
             </div>
           </DialogDescription>
         </DialogHeader>
 
         <div ref={containerRef} className="flex-1 overflow-auto h-full w-full">
-          <div className="flex justify-center min-h-full py-4">
+          <div
+            className="flex justify-center min-h-full py-4"
+            style={{
+              transform: rotation ? `rotate(${rotation}deg)` : "none",
+              transformOrigin: "center center",
+              height: "100%",
+            }}
+          >
             <Document
               file={pdfUrl}
               onLoadSuccess={onDocumentLoadSuccess}
@@ -137,9 +247,10 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
               <Page
                 pageNumber={currentPage}
                 scale={scale}
-                width={containerWidth}
+                rotate={rotation}
                 renderTextLayer={true}
                 renderAnnotationLayer={true}
+                onLoadSuccess={onPageLoadSuccess}
                 customTextRenderer={
                   pageNumber === currentPage && snippet
                     ? customTextRenderer

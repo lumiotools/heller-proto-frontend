@@ -571,14 +571,18 @@ export default function SearchResults({
   return (
     <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5">
       {/* History Sidebar - Fixed height with overflow-y-auto */}
-      <div
-        className="w-64 p-4 hidden md:block h-[calc(100vh-140px)] overflow-y-auto flex flex-col"
-        style={{ scrollPaddingTop: "40px", scrollPaddingBottom: "60px" }}
-      >
-        <h2 className="text-lg font-semibold mb-4 sticky top-0 bg-white z-10 pb-2 pt-4">
-          History
-        </h2>
-        <div className="space-y-2 pb-4 flex-1 overflow-auto">
+      {/* History Sidebar - Fixed to make history properly scrollable */}
+      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-140px)] border-r">
+        {/* Fixed header */}
+        <div className="p-4 pb-2 bg-white">
+          <h2 className="text-lg font-semibold">History</h2>
+        </div>
+
+        {/* Scrollable middle section - this is the key part */}
+        <div
+          className="flex-1 overflow-y-auto px-4"
+          style={{ height: "calc(100% - 110px)" }}
+        >
           {searchHistory.length > 0 ? (
             searchHistory.map((item, index) => {
               // Check if this history item has chat history
@@ -589,7 +593,7 @@ export default function SearchResults({
               return (
                 <div
                   key={index}
-                  className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm ${
+                  className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm mb-2 ${
                     item === query ? "bg-gray-100 font-medium" : ""
                   }`}
                   onClick={() => onSearch(item)}
@@ -599,22 +603,23 @@ export default function SearchResults({
               );
             })
           ) : (
-            <div className="text-sm text-gray-500 italic">
+            <div className="text-sm text-gray-500 italic p-2">
               No search history yet
             </div>
           )}
         </div>
-        <div
-          className="flex items-center text-[#0083BF] cursor-pointer bg-white pt-2 mt-auto"
-          onClick={onBackToLanding}
-        >
-          <div className="flex items-center gap-1 py-2">
-            <span className="text-lg">+</span>
+
+        {/* Fixed footer */}
+        <div className="p-4 pt-2 bg-white border-t">
+          <div
+            className="flex items-center text-[#0083BF] cursor-pointer"
+            onClick={onBackToLanding}
+          >
+            <span className="text-lg mr-1">+</span>
             <span className="text-base font-medium">Make New Search</span>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
       {/* Main Content */}
       <div className="flex-1 overflow-auto flex flex-col mb-16">
         {/* Back button and breadcrumb */}
@@ -718,14 +723,14 @@ export default function SearchResults({
                     </h3>
                     <div className="flex justify-center space-x-4">
                       <Button
-                        className="bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
+                        className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
                         onClick={() => setShowChat(true)}
                       >
                         Yes
                       </Button>
                       <Button
                         variant="outline"
-                        className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
+                        className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
                         onClick={() => onWantMoreInfo(false)}
                       >
                         No
@@ -920,20 +925,11 @@ export default function SearchResults({
           )}
         </div>
       </div>
-
       {/* Email Dialog */}
       <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Email Results</DialogTitle>
-            <Button
-              variant="ghost"
-              className="absolute right-4 top-4 rounded-sm opacity-70 h-6 w-6 p-0"
-              onClick={() => setIsEmailDialogOpen(false)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
           </DialogHeader>
           <div className="p-4">
             <div className="space-y-4">
@@ -961,20 +957,11 @@ export default function SearchResults({
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Ask Colleague Dialog */}
       <Dialog open={isAskColleagueOpen} onOpenChange={setIsAskColleagueOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Ask a Colleague</DialogTitle>
-            <Button
-              variant="ghost"
-              className="absolute right-4 top-4 rounded-sm opacity-70 h-6 w-6 p-0"
-              onClick={() => setIsAskColleagueOpen(false)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
           </DialogHeader>
           <div className="p-4">
             <div className="space-y-4">
@@ -995,7 +982,11 @@ export default function SearchResults({
               </div>
               <div className="text-sm">
                 <p>Your colleagues will receive an email with your question:</p>
-                <p className="mt-2 italic bg-gray-50 p-2 rounded">{query}</p>
+                <Textarea
+                  value={query}
+                  onChange={(e) => onSearch(e.target.value)} // Update the query state
+                  className="mt-2 p-2 rounded w-full"
+                />
               </div>
               <Button
                 onClick={handleAskColleague}
