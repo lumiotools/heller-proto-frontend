@@ -219,7 +219,7 @@ export default function ChatInterface({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"insights" | "trends" | "search">(
-    "insights"
+    "search"
   );
 
   const scrollToBottom = () => {
@@ -394,7 +394,7 @@ export default function ChatInterface({
                 </p>
 
                 {/* Category buttons */}
-                <div className="flex gap-4 justify-center mt-16 w-full">
+                <div className="hidden flex gap-4 justify-center mt-16 w-full">
                   <button
                     className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
                       activeTab === "insights"
