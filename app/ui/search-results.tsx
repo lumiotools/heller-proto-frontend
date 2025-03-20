@@ -15,6 +15,7 @@ import {
   type ApiResponse,
   type ChatHistoryMessage,
 } from "@/lib/chatbotapi";
+import remarkGfm from "remark-gfm";
 
 // Update the interface to use proper types
 interface SearchResultsProps {
@@ -98,33 +99,9 @@ const linksArray = [
 
 // Change the formatAnswer function to not force bold styling and let markdown render naturally
 const formatAnswer = (answer: string) => {
-  // This is a simple example - you might need more sophisticated parsing
-  const sections = answer.split(/\d+\.\s+/).filter(Boolean);
-
-  if (sections.length <= 1) {
-    return (
-      <div className="prose max-w-none">
-        <ReactMarkdown>{answer}</ReactMarkdown>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {sections.map((section, index) => {
-        const title = section.split("\n")[0].trim();
-        const content = section.split("\n").slice(1).join("\n").trim();
-
-        return (
-          <div key={index} className="space-y-2">
-            <div className="prose max-w-none">
-              <ReactMarkdown>{`${
-                index + 1
-              }. ${title}\n${content}`}</ReactMarkdown>
-            </div>
-          </div>
-        );
-      })}
+    <div className="prose max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
     </div>
   );
 };
@@ -602,7 +579,9 @@ export default function SearchResults({
                               {message.role === "assistant" ? (
                                 formatAnswer(message.content)
                               ) : (
-                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {message.content}
+                                </ReactMarkdown>
                               )}
                             </div>
                           </div>
