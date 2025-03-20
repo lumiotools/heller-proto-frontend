@@ -32,7 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-// @ts-ignore
+// @ts-expect-error html2pdf.js lacks TypeScript type definitions
 import html2pdf from "html2pdf.js";
 import { sendColleagueEmail, sendResultsEmail } from "@/lib/sendEmail";
 
