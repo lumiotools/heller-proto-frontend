@@ -381,7 +381,7 @@ export default function SearchResults({
           ) : (
             <div className="px-4 py-2">
               <div className="text-sm text-gray-500 italic p-2">
-                No search history yet
+                No message history yet
               </div>
             </div>
           )}
@@ -394,7 +394,7 @@ export default function SearchResults({
             onClick={onBackToLanding}
           >
             <span className="text-lg mr-1">+</span>
-            <span className="text-base font-medium">Make New Search</span>
+            <span className="text-base font-medium">Ask new question</span>
           </div>
         </div>
       </div>
