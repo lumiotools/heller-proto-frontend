@@ -501,14 +501,14 @@ export default function SearchResults({
                     </h3>
                     <div className="flex justify-center space-x-4">
                       <Button
-                        className=" bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
+                        className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
                         onClick={() => setShowChat(true)}
                       >
                         Yes
                       </Button>
                       <Button
                         variant="outline"
-                        className=" border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
+                        className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
                         onClick={() => onWantMoreInfo(false)}
                       >
                         No
