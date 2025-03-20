@@ -91,7 +91,7 @@ export async function queryHellerApi(
     try {
       console.log(`Trying API request with config:`, config);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/chat/query`,
+        `${process.env.NEXT_PUBLIC_API_URL}/chat/query2`,
         config
       );
 
