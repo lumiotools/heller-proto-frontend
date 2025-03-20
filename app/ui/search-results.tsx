@@ -2,7 +2,15 @@
 "use client";
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { Send, ChevronLeft, FileText } from "lucide-react";
+import {
+  Send,
+  ChevronLeft,
+  FileText,
+  Download,
+  Mail,
+  X,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -16,6 +24,15 @@ import {
   type ChatHistoryMessage,
 } from "@/lib/chatbotapi";
 import remarkGfm from "remark-gfm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 
 // Update the interface to use proper types
 interface SearchResultsProps {
@@ -97,13 +114,63 @@ const linksArray = [
   },
 ];
 
-// Change the formatAnswer function to not force bold styling and let markdown render naturally
+// Custom CSS to properly render markdown
+const markdownStyles = `
+.markdown h1 { font-size: 2em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown h2 { font-size: 1.5em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown h3 { font-size: 1.17em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown h4 { font-size: 1em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown h5 { font-size: 0.83em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown h6 { font-size: 0.67em; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.markdown strong { font-weight: bold; }
+.markdown em { font-style: italic; }
+.markdown ul { list-style-type: disc; padding-left: 2em; margin: 1em 0; }
+.markdown ol { list-style-type: decimal; padding-left: 2em; margin: 1em 0; }
+.markdown blockquote { border-left: 4px solid #e5e7eb; padding-left: 1em; margin: 1em 0; color: #4b5563; }
+.markdown pre { background-color: #f3f4f6; padding: 1em; border-radius: 0.375em; overflow-x: auto; margin: 1em 0; }
+.markdown code { font-family: monospace; background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25em; }
+.markdown a { color: #0083BF; text-decoration: underline; }
+.markdown table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.markdown th, .markdown td { border: 1px solid #e5e7eb; padding: 0.5em; text-align: left; }
+.markdown th { background-color: #f9fafb; }
+`;
+
+// Improved formatAnswer function with proper markdown styling
 const formatAnswer = (answer: string) => {
   return (
-    <div className="prose max-w-none">
+    <div className="markdown prose max-w-none">
+      <style>{markdownStyles}</style>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
     </div>
   );
+};
+
+// Email validation function
+const isValidEmail = (email: string) => {
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
+};
+
+// Function to generate PDF
+const generatePDF = (content: string, filename: string) => {
+  const contentElement = document.getElementById(content);
+  if (!contentElement) return;
+
+  html2canvas(contentElement, {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  }).then((canvas) => {
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.save(filename);
+  });
 };
 
 // Component to display sources consistently
@@ -206,7 +273,6 @@ const SourcesDisplay = ({
   );
 };
 
-// Then in the component destructuring, add the new prop
 export default function SearchResults({
   query,
   results,
@@ -221,9 +287,21 @@ export default function SearchResults({
   const [chatMessages, setChatMessages] = useState<ChatHistoryMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailStatus, setEmailStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+  const [isAskColleagueOpen, setIsAskColleagueOpen] = useState(false);
+  const [colleagueEmails, setColleagueEmails] = useState("");
+  const [askColleagueStatus, setAskColleagueStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const resultContentRef = useRef<HTMLDivElement>(null);
 
   // Reset chat messages when query changes
   useEffect(() => {
@@ -375,17 +453,132 @@ export default function SearchResults({
     }
   };
 
+  // Handle email sending
+  const handleSendEmail = async () => {
+    if (!emailInput.trim() || !isValidEmail(emailInput)) {
+      alert("Please enter a valid email address");
+      return;
+    }
+
+    setEmailStatus("sending");
+
+    try {
+      // Simulate email sending with timeout
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Construct email content with the query and results
+      const emailContent = {
+        to: emailInput,
+        subject: `Heller AI Search Results for: ${query}`,
+        body: `
+          <h2>Search Query: ${query}</h2>
+          <div>${results?.answer || "No results available"}</div>
+          <h3>Sources:</h3>
+          <ul>
+            ${
+              results?.sources
+                ? Object.keys(results.sources)
+                    .map((source) => `<li>${source}</li>`)
+                    .join("")
+                : "No sources available"
+            }
+          </ul>
+        `,
+      };
+
+      console.log("Email sent:", emailContent);
+      setEmailStatus("success");
+
+      // Reset after success
+      setTimeout(() => {
+        setIsEmailDialogOpen(false);
+        setEmailInput("");
+        setEmailStatus("idle");
+      }, 1500);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      setEmailStatus("error");
+
+      // Reset after error
+      setTimeout(() => {
+        setEmailStatus("idle");
+      }, 1500);
+    }
+  };
+
+  // Handle asking a colleague
+  const handleAskColleague = async () => {
+    // Check if emails are valid (split by commas and validate each)
+    const emails = colleagueEmails.split(",").map((e) => e.trim());
+    const allValid = emails.every((email) => isValidEmail(email));
+
+    if (!colleagueEmails.trim() || !allValid) {
+      alert("Please enter valid email addresses (comma separated)");
+      return;
+    }
+
+    setAskColleagueStatus("sending");
+
+    try {
+      // Simulate email sending with timeout
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Construct email content for colleagues
+      const emailContent = {
+        to: emails,
+        subject: `Your teammate needs help with: ${query}`,
+        body: `
+          Hey there,
+          
+          Your teammate has asked you: "${query}"
+          
+          Please respond to this email to answer and it will get added to the Heller database. 
+          You can also attach documents.
+          
+          Best regards,
+          Heller AI Assistant
+        `,
+      };
+
+      console.log("Colleague request sent:", emailContent);
+      setAskColleagueStatus("success");
+
+      // Reset after success
+      setTimeout(() => {
+        setIsAskColleagueOpen(false);
+        setColleagueEmails("");
+        setAskColleagueStatus("idle");
+      }, 1500);
+    } catch (error) {
+      console.error("Error sending colleague request:", error);
+      setAskColleagueStatus("error");
+
+      // Reset after error
+      setTimeout(() => {
+        setAskColleagueStatus("idle");
+      }, 1500);
+    }
+  };
+
+  // Download results as PDF
+  const handleDownloadPDF = () => {
+    generatePDF(
+      "result-content",
+      `Heller-Search-${query.replace(/\s+/g, "-")}.pdf`
+    );
+  };
+
   return (
-    <div className="flex h-screen bg-white mt-8 ml-5">
+    <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5">
       {/* History Sidebar - Fixed height with overflow-y-auto */}
       <div
-        className="w-64 p-4 hidden md:block h-[calc(100vh-8rem)] overflow-y-auto"
+        className="w-64 p-4 hidden md:block h-[calc(100vh-140px)] overflow-y-auto flex flex-col"
         style={{ scrollPaddingTop: "40px", scrollPaddingBottom: "60px" }}
       >
-        <h2 className="text-lg font-semibold mb-4 sticky top-0 bg-white z-10 pb-2">
+        <h2 className="text-lg font-semibold mb-4 sticky top-0 bg-white z-10 pb-2 pt-4">
           History
         </h2>
-        <div className="space-y-2 pb-4">
+        <div className="space-y-2 pb-4 flex-1 overflow-auto">
           {searchHistory.length > 0 ? (
             searchHistory.map((item, index) => {
               // Check if this history item has chat history
@@ -412,7 +605,7 @@ export default function SearchResults({
           )}
         </div>
         <div
-          className="flex items-center text-[#0083BF] cursor-pointer sticky bottom-0 bg-white"
+          className="flex items-center text-[#0083BF] cursor-pointer bg-white pt-2 mt-auto"
           onClick={onBackToLanding}
         >
           <div className="flex items-center gap-1 py-2">
@@ -457,13 +650,12 @@ export default function SearchResults({
         {/* Content Area - Either Search Results or Chat */}
         <div
           className="flex-1 overflow-auto"
-          style={{ height: "calc(100vh - 16rem)" }}
+          style={{ height: "calc(100vh - 220px)" }}
         >
           {!showChat ? (
             // Search Results View
             <div className="max-w-4xl mx-auto p-6">
               <h1 className="text-xl font-medium mb-6">
-                Your Search Results for:{" "}
                 <span className="text-[#0083BF]">{query}</span>
               </h1>
 
@@ -486,17 +678,40 @@ export default function SearchResults({
                 </div>
               ) : results ? (
                 <div className="bg-white rounded-lg p-6">
-                  <div className="prose max-w-none">
-                    {formatAnswer(results.answer)}
+                  <div className="flex justify-end space-x-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                      onClick={() => setIsEmailDialogOpen(true)}
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>Email</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                      onClick={handleDownloadPDF}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download PDF</span>
+                    </Button>
                   </div>
 
-                  {/* Sources */}
-                  {results.sources &&
-                    Object.keys(results.sources).length > 0 && (
-                      <SourcesDisplay sources={results.sources} />
-                    )}
+                  <div id="result-content" ref={resultContentRef}>
+                    <div className="prose max-w-none">
+                      {formatAnswer(results.answer)}
+                    </div>
 
-                  {/* Want More Information */}
+                    {/* Sources */}
+                    {results.sources &&
+                      Object.keys(results.sources).length > 0 && (
+                        <SourcesDisplay sources={results.sources} />
+                      )}
+                  </div>
+
+                  {/* Want More Information & Ask Colleague */}
                   <div className="mt-10 border-t border-gray-200 pt-6">
                     <h3 className="text-lg font-medium mb-4 text-center">
                       Want More Information?
@@ -514,6 +729,14 @@ export default function SearchResults({
                         onClick={() => onWantMoreInfo(false)}
                       >
                         No
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8 flex items-center gap-1"
+                        onClick={() => setIsAskColleagueOpen(true)}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Ask Colleague
                       </Button>
                     </div>
                   </div>
@@ -534,7 +757,28 @@ export default function SearchResults({
               </h1>
 
               <div className="bg-white rounded-lg p-6">
-                <div className="space-y-6">
+                <div className="flex justify-end space-x-2 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                    onClick={() => setIsEmailDialogOpen(true)}
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                    onClick={handleDownloadPDF}
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download PDF</span>
+                  </Button>
+                </div>
+
+                <div id="chat-content" className="space-y-6">
                   {chatMessages.map((message, index) => (
                     <div
                       key={index}
@@ -575,7 +819,8 @@ export default function SearchResults({
                                 : "bg-white border border-blue-100 text-black rounded-tl-none"
                             )}
                           >
-                            <div className="prose max-w-none break-words">
+                            <div className="prose max-w-none break-words markdown">
+                              <style>{markdownStyles}</style>
                               {message.role === "assistant" ? (
                                 formatAnswer(message.content)
                               ) : (
@@ -675,6 +920,97 @@ export default function SearchResults({
           )}
         </div>
       </div>
+
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Email Results</DialogTitle>
+            <Button
+              variant="ghost"
+              className="absolute right-4 top-4 rounded-sm opacity-70 h-6 w-6 p-0"
+              onClick={() => setIsEmailDialogOpen(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email Address</label>
+                <Input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="example@company.com"
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                onClick={handleSendEmail}
+                disabled={emailStatus === "sending"}
+                className="w-full bg-[#0083BF] hover:bg-[#006a9e]"
+              >
+                {emailStatus === "idle" && "Send Results"}
+                {emailStatus === "sending" && "Sending..."}
+                {emailStatus === "success" && "Sent Successfully!"}
+                {emailStatus === "error" && "Error - Try Again"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ask Colleague Dialog */}
+      <Dialog open={isAskColleagueOpen} onOpenChange={setIsAskColleagueOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ask a Colleague</DialogTitle>
+            <Button
+              variant="ghost"
+              className="absolute right-4 top-4 rounded-sm opacity-70 h-6 w-6 p-0"
+              onClick={() => setIsAskColleagueOpen(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">
+                  Colleague Email Addresses
+                </label>
+                <div className="text-xs text-gray-500 mb-1">
+                  Separate multiple emails with commas
+                </div>
+                <Input
+                  type="text"
+                  value={colleagueEmails}
+                  onChange={(e) => setColleagueEmails(e.target.value)}
+                  placeholder="colleague1@company.com, colleague2@company.com"
+                  className="mt-1"
+                />
+              </div>
+              <div className="text-sm">
+                <p>Your colleagues will receive an email with your question:</p>
+                <p className="mt-2 italic bg-gray-50 p-2 rounded">{query}</p>
+              </div>
+              <Button
+                onClick={handleAskColleague}
+                disabled={askColleagueStatus === "sending"}
+                className="w-full bg-[#0083BF] hover:bg-[#006a9e]"
+              >
+                {askColleagueStatus === "idle" && "Send Request"}
+                {askColleagueStatus === "sending" && "Sending..."}
+                {askColleagueStatus === "success" && "Sent Successfully!"}
+                {askColleagueStatus === "error" && "Error - Try Again"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
