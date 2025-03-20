@@ -74,7 +74,7 @@ export default function Home() {
       // Update search history order
       setSearchHistory((prev) => {
         const filteredHistory = prev.filter((item) => item !== query);
-        return [query, ...filteredHistory.slice(0, 9)];
+        return [query, ...filteredHistory];
       });
       return;
     }
@@ -106,7 +106,7 @@ export default function Home() {
         // Remove the query if it already exists to avoid duplicates
         const filteredHistory = prev.filter((item) => item !== query);
         // Add the new query at the beginning
-        return [query, ...filteredHistory.slice(0, 9)];
+        return [query, ...filteredHistory];
       });
     } catch (error) {
       console.error("Search error:", error);

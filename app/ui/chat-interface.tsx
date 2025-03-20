@@ -219,7 +219,7 @@ export default function ChatInterface({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"insights" | "trends" | "search">(
-    "insights"
+    "search"
   );
 
   const scrollToBottom = () => {
@@ -394,7 +394,7 @@ export default function ChatInterface({
                 </p>
 
                 {/* Category buttons */}
-                <div className="flex gap-4 justify-center mt-16 w-full">
+                <div className="hidden flex gap-4 justify-center mt-16 w-full">
                   <button
                     className={`text-center px-4 py-3 rounded-md text-[#011A2E] transition-colors w-fit ${
                       activeTab === "insights"
@@ -613,7 +613,7 @@ export default function ChatInterface({
                         <input
                           type="text"
                           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AFFF] focus:border-transparent"
-                          placeholder="Ask anything about Heller Industries..."
+                          placeholder="Ask anything about Heller products and technical specifications..."
                           value={input}
                           onChange={(e) => setInput(e.target.value)}
                           onKeyDown={(e) => {
@@ -637,7 +637,7 @@ export default function ChatInterface({
                     <div className="flex flex-wrap gap-4 mt-8">
                       {[
                         "How can I improve efficiency in reflow soldering?",
-                        "What are the steps for Reactor Catalyst Removal Retrofit",
+                        "What are the steps for Reactor Catalyst Removal Retrofit?",
                         "What is the purpose of the wire mesh trap in the flux reactor?",
                         "How to loosen the reactor flange?",
                       ].map((question) => (

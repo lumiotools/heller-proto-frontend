@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import { Send, ChevronLeft, FileText } from "lucide-react";
+import { Send, ChevronLeft, Download, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import { PdfViewerModal } from "../ui/pdf-viewer-modal";
 import {
   queryHellerApi,
   saveChatHistory,
@@ -15,6 +15,17 @@ import {
   type ApiResponse,
   type ChatHistoryMessage,
 } from "@/lib/chatbotapi";
+import remarkGfm from "remark-gfm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import dynamic from "next/dynamic";
+import { sendColleagueEmail, sendResultsEmail } from "@/lib/sendEmail";
+import { SourcesDisplay } from "./source-display";
 
 // Update the interface to use proper types
 interface SearchResultsProps {
@@ -28,208 +39,45 @@ interface SearchResultsProps {
   onUpdateChatHistory?: (query: string, messages: ChatHistoryMessage[]) => void;
 }
 
-// Links array from your data
-const linksArray = [
-  {
-    filename: "2043MK7 System User Manual - Flux Reactor Maintenance.pdf",
-    link: "https://drive.google.com/file/d/1mMNbQBWnw-ejenPIXYpwPI0hMVWvPC6n/view?usp=sharing",
-    localPath:
-      "/docs/2043MK7 System User Manual - Flux Reactor Maintenance.pdf",
-  },
-  {
-    filename: "848861 REACTOR UPGRADE TEST Retrofit (R2).xlsx",
-    link: "https://docs.google.com/spreadsheets/d/1I4rKI4aEW6XXjQ6PuX2JY-1tOJBSSe8W/edit?usp=sharing&ouid=111377379083910385195&rtpof=true&sd=true",
-    localPath: "/docs/848861 REACTOR UPGRADE TEST Retrofit (R2).xlsx",
-  },
-  {
-    filename: "854508 Reactor Catalyst Remove Retrofit (R1).xls",
-    link: "https://docs.google.com/spreadsheets/d/1raFr_s729zOelX32wUEyoRogoFW7iLzy/edit?usp=sharing&ouid=111377379083910385195&rtpof=true&sd=true",
-    localPath: "/docs/854508 Reactor Catalyst Remove Retrofit (R1).xls",
-  },
-  {
-    filename: "4177290 (rev. A).pdf",
-    link: "https://drive.google.com/file/d/1Njp7QsRF3AwoEu9DbQTO22UIizWVJ_gF/view?usp=sharing",
-    localPath: "/docs/4177290 (rev. A).pdf",
-  },
-  {
-    filename: "4188290 (rev. A).pdf",
-    link: "https://drive.google.com/file/d/1iLM2FgaNWjrF4pEBb3zRx542VjjZtrtO/view?usp=sharing",
-    localPath: "/docs/4188290 (rev. A).pdf",
-  },
-  {
-    filename:
-      "4196387-Instructions  for Reactor Upgrade Retrofit (A)_RFC-355.pdf",
-    link: "https://drive.google.com/file/d/1HaCNL5PmP6ONPtNL0jcYr7rHVm6o3X2B/view?usp=sharing",
-    localPath:
-      "/docs/4196387-Instructions  for Reactor Upgrade Retrofit (A)_RFC-355.pdf",
-  },
-  {
-    filename:
-      "4224364-Instruction  For Reactor Catalyst Remove Retrofit(A).pdf",
-    link: "https://drive.google.com/file/d/156qAD4F-I8HzQ1uVSHDpbDKG0VuWdlJd/view?usp=sharing",
-    localPath:
-      "/docs/4224364-Instruction  For Reactor Catalyst Remove Retrofit(A).pdf",
-  },
-  {
-    filename: "ALPHA zeolite and catalyst (7-26-22) abridged.pdf",
-    link: "https://drive.google.com/file/d/1WOlwn2_2vwFbvGIxIg3ow6AbX2dTOaPt/view?usp=sharing",
-    localPath: "/docs/ALPHA zeolite and catalyst (7-26-22) abridged.pdf",
-  },
-  {
-    filename: "Heller Flux Reactor Overview (4-11-23).pdf",
-    link: "https://drive.google.com/file/d/1c_uoS2NBQ5C87samRf5yE0pIz1WGGiXz/view?usp=sharing",
-    localPath: "/docs/Heller Flux Reactor Overview (4-11-23).pdf",
-  },
-  {
-    filename:
-      "Reactor Return Gas into Big Flux box Test with Heat Exchanger Water OFF (RFC355).pdf",
-    link: "https://drive.google.com/file/d/1aIQC2PZejl6RDHF9ewY1ymgVj_-sL5Ye/view?usp=sharing",
-    localPath:
-      "/docs/Reactor Return Gas into Big Flux box Test with Heat Exchanger Water OFF (RFC355).pdf",
-  },
-  {
-    filename:
-      "RFC-355  Reactor Catalyst Upgrade And Return Gas Into Flux Box.pdf",
-    link: "https://drive.google.com/file/d/1PxlqRdSr4fqqlTKkxiIaophIfkIRDSld/view?usp=sharing",
-    localPath:
-      "/docs/RFC-355  Reactor Catalyst Upgrade And Return Gas Into Flux Box.pdf",
-  },
-];
-
-// Change the formatAnswer function to not force bold styling and let markdown render naturally
+// Improved formatAnswer function with proper markdown styling
 const formatAnswer = (answer: string) => {
-  // This is a simple example - you might need more sophisticated parsing
-  const sections = answer.split(/\d+\.\s+/).filter(Boolean);
+  return (
+    <div className="markdown prose max-w-none">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
+    </div>
+  );
+};
 
-  if (sections.length <= 1) {
-    return (
-      <div className="prose max-w-none">
-        <ReactMarkdown>{answer}</ReactMarkdown>
-      </div>
-    );
+// Email validation function
+const isValidEmail = (email: string) => {
+  const re =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(String(email).toLowerCase());
+};
+
+// Function to generate PDF
+const generatePDF = async (contentId: string, filename: string) => {
+  const contentElement = document.getElementById(contentId);
+  if (!contentElement) return;
+
+  try {
+    const html2pdfModule = await import("html2pdf.js");
+    const html2pdf = html2pdfModule.default;
+
+    const pdfOptions = {
+      margin: 10,
+      filename: filename,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf().from(contentElement).set(pdfOptions).save();
+  } catch (error) {
+    console.error("Error generating PDF:", error);
   }
-
-  return (
-    <div className="space-y-6">
-      {sections.map((section, index) => {
-        const title = section.split("\n")[0].trim();
-        const content = section.split("\n").slice(1).join("\n").trim();
-
-        return (
-          <div key={index} className="space-y-2">
-            <div className="prose max-w-none">
-              <ReactMarkdown>{`${
-                index + 1
-              }. ${title}\n${content}`}</ReactMarkdown>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 };
 
-// Component to display sources consistently
-const SourcesDisplay = ({
-  sources,
-  messageId = null,
-}: {
-  sources: Record<string, { page: number; relevance: number; text?: string }[]>;
-  messageId?: string | null;
-}) => {
-  const [isPdfOpen, setIsPdfOpen] = useState(false);
-  const [selectedPdf, setSelectedPdf] = useState<{
-    url: string;
-    page: number;
-    snippet: string;
-  } | null>(null);
-
-  if (!sources || Object.keys(sources).length === 0) return null;
-
-  const handleOpenPdf = (filename: string, page: number, text = "") => {
-    // Find the link for this filename
-    const linkInfo = linksArray.find(
-      (item) =>
-        item.filename.toLowerCase().includes(filename.toLowerCase()) ||
-        filename.toLowerCase().includes(item.filename.toLowerCase())
-    );
-
-    if (linkInfo && linkInfo.localPath.endsWith(".pdf")) {
-      setSelectedPdf({
-        url: linkInfo.localPath,
-        page,
-        snippet: text,
-      });
-      setIsPdfOpen(true);
-    }
-  };
-
-  return (
-    <div className="mt-4">
-      <h3 className="text-lg mb-4">Sources</h3>
-      <div className="flex flex-wrap gap-4">
-        {Object.entries(sources).map(([filename, pages], index) => {
-          // Find the link for this filename
-          const linkInfo = linksArray.find(
-            (item) =>
-              item.filename.toLowerCase().includes(filename.toLowerCase()) ||
-              filename.toLowerCase().includes(item.filename.toLowerCase())
-          );
-
-          // Sort pages by relevance
-          const sortedPages = [...pages].sort(
-            (a, b) => b.relevance - a.relevance
-          );
-
-          return (
-            <div key={index} className="flex flex-col">
-              <a
-                href={linkInfo?.link || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[#0083BF] hover:text-[#006a9e] transition-colors group bg-[#F5FBFF] hover:bg-[#E6F7FF] px-4 py-2 rounded-md"
-              >
-                <FileText className="h-5 w-5 flex-shrink-0" />
-                <span className="font-medium">{filename}</span>
-              </a>
-              <div className="ml-4 mt-2 space-y-1">
-                {sortedPages.map((page, pageIndex) => (
-                  <div
-                    key={pageIndex}
-                    className="text-sm cursor-pointer hover:underline text-[#0083BF] flex items-start"
-                    onClick={() =>
-                      handleOpenPdf(filename, page.page, page.text || "")
-                    }
-                  >
-                    <span className="mr-1">Page {page.page}</span>
-                    {page.text && (
-                      <span className="text-gray-600 text-xs italic">
-                        - &ldquo;{page.text.substring(0, 50)}
-                        {page.text.length > 50 ? "..." : ""}&rdquo;
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {selectedPdf && (
-        <PdfViewerModal
-          isOpen={isPdfOpen}
-          onClose={() => setIsPdfOpen(false)}
-          pdfUrl={selectedPdf.url}
-          pageNumber={selectedPdf.page}
-          snippet={selectedPdf.snippet}
-        />
-      )}
-    </div>
-  );
-};
-
-// Then in the component destructuring, add the new prop
 export default function SearchResults({
   query,
   results,
@@ -244,10 +92,27 @@ export default function SearchResults({
   const [chatMessages, setChatMessages] = useState<ChatHistoryMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailStatus, setEmailStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+  const [isAskColleagueOpen, setIsAskColleagueOpen] = useState(false);
+  const [colleagueEmails, setColleagueEmails] = useState("");
+  const [askColleagueStatus, setAskColleagueStatus] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+  const [emailMessage, setEmailMessage] = useState("");
+
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
+  const resultContentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isAskColleagueOpen) {
+      setEmailMessage(query);
+    }
+  }, [isAskColleagueOpen]);
   // Reset chat messages when query changes
   useEffect(() => {
     // Clear chat messages when query changes
@@ -398,53 +263,141 @@ export default function SearchResults({
     }
   };
 
-  return (
-    <div className="flex h-screen bg-white mt-8 ml-5">
-      {/* History Sidebar - Fixed height with overflow-y-auto */}
-      <div
-        className="w-64 p-4 hidden md:block h-[calc(100vh-8rem)] overflow-y-auto"
-        style={{ scrollPaddingTop: "40px", scrollPaddingBottom: "60px" }}
-      >
-        <h2 className="text-lg font-semibold mb-4 sticky top-0 bg-white z-10 pb-2">
-          History
-        </h2>
-        <div className="space-y-2 pb-4">
-          {searchHistory.length > 0 ? (
-            searchHistory.map((item, index) => {
-              // Check if this history item has chat history
-              const savedData = getSearchResults(item);
-              const hasChatHistory =
-                savedData?.chatHistory && savedData.chatHistory.length > 0;
+  // Handle email sending
+  const handleSendEmail = async () => {
+    if (!emailInput.trim() || !isValidEmail(emailInput)) {
+      alert("Please enter a valid email address");
+      return;
+    }
 
-              return (
-                <div
-                  key={index}
-                  className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm ${
-                    item === query ? "bg-gray-100 font-medium" : ""
-                  }`}
-                  onClick={() => onSearch(item)}
-                >
-                  {item}
-                </div>
-              );
-            })
+    setEmailStatus("sending");
+
+    try {
+      await sendResultsEmail(
+        emailInput,
+        query ?? "", // Ensure query is never null
+        results?.answer ?? "", // Default to empty string if null
+        results?.sources ?? {} // Default to empty object if null
+      );
+
+      console.log("✅ Email sent to", emailInput);
+      setEmailStatus("success");
+
+      // Reset state after success
+      setTimeout(() => {
+        setIsEmailDialogOpen(false);
+        setEmailInput("");
+        setEmailStatus("idle");
+      }, 1500);
+    } catch (error) {
+      console.error("❌ Error sending email:", error);
+      setEmailStatus("error");
+
+      // Reset state after failure
+      setTimeout(() => {
+        setEmailStatus("idle");
+      }, 1500);
+    }
+  };
+
+  // Handle asking a colleague
+  const handleAskColleague = async () => {
+    const emails = colleagueEmails.split(",").map((e) => e.trim());
+    const allValid = emails.every((email) => isValidEmail(email));
+
+    if (!colleagueEmails.trim() || !allValid) {
+      alert("Please enter valid email addresses (comma separated)");
+      return;
+    }
+
+    setAskColleagueStatus("sending");
+
+    try {
+      // Use emailMessage instead of query
+      await sendColleagueEmail(colleagueEmails, emailMessage, isValidEmail);
+      console.log("✅ Colleague request sent:", colleagueEmails);
+      setAskColleagueStatus("success");
+
+      // Reset after success
+      setTimeout(() => {
+        setIsAskColleagueOpen(false);
+        setColleagueEmails("");
+        setEmailMessage(""); // Reset the email message
+        setAskColleagueStatus("idle");
+      }, 1500);
+    } catch (error) {
+      console.error("❌ Error sending colleague request:", error);
+      setAskColleagueStatus("error");
+
+      // Reset after error
+      setTimeout(() => {
+        setAskColleagueStatus("idle");
+      }, 1500);
+    }
+  };
+
+  // Download results as PDF
+  const handleDownloadPDF = () => {
+    generatePDF(
+      "result-content",
+      `Heller-Search-${query.replace(/\s+/g, "-")}.pdf`
+    );
+  };
+
+  return (
+    <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5 pt-6">
+      {/* History Sidebar - Fixed height with overflow-y-auto */}
+      {/* History Sidebar - Fixed to make history properly scrollable */}
+      {/* History Sidebar - Properly fixed for scrolling */}
+      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-120px)] ">
+        {/* Fixed header */}
+        <div className="p-4 pb-2 bg-white ">
+          <h2 className="text-lg font-semibold">History</h2>
+        </div>
+
+        {/* Scrollable history section */}
+        <div className="flex-1 overflow-y-auto">
+          {searchHistory.length > 0 ? (
+            <div className="px-4 py-2">
+              {searchHistory.map((item, index) => {
+                // Check if this history item has chat history
+                const savedData = getSearchResults(item);
+                const hasChatHistory =
+                  savedData?.chatHistory && savedData.chatHistory.length > 0;
+
+                return (
+                  <div
+                    key={index}
+                    className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm mb-2 ${
+                      item === query ? "bg-gray-100 font-medium" : ""
+                    }`}
+                    onClick={() => onSearch(item)}
+                  >
+                    {item}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="text-sm text-gray-500 italic">
-              No search history yet
+            <div className="px-4 py-2">
+              <div className="text-sm text-gray-500 italic p-2">
+                No search history yet
+              </div>
             </div>
           )}
         </div>
-        <div
-          className="flex items-center text-[#0083BF] cursor-pointer sticky bottom-0 bg-white"
-          onClick={onBackToLanding}
-        >
-          <div className="flex items-center gap-1 py-2">
-            <span className="text-lg">+</span>
+
+        {/* Fixed footer */}
+        <div className="p-4 bg-white mt-auto">
+          <div
+            className="flex items-center text-[#0083BF] cursor-pointer"
+            onClick={onBackToLanding}
+          >
+            <span className="text-lg mr-1">+</span>
             <span className="text-base font-medium">Make New Search</span>
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-auto flex flex-col mb-16">
         {/* Back button and breadcrumb */}
@@ -480,13 +433,12 @@ export default function SearchResults({
         {/* Content Area - Either Search Results or Chat */}
         <div
           className="flex-1 overflow-auto"
-          style={{ height: "calc(100vh - 16rem)" }}
+          style={{ height: "calc(100vh - 220px)" }}
         >
           {!showChat ? (
             // Search Results View
             <div className="max-w-4xl mx-auto p-6">
-              <h1 className="text-xl font-medium mb-6">
-                Your Search Results for:{" "}
+              <h1 className="text-xl font-medium">
                 <span className="text-[#0083BF]">{query}</span>
               </h1>
 
@@ -509,34 +461,65 @@ export default function SearchResults({
                 </div>
               ) : results ? (
                 <div className="bg-white rounded-lg p-6">
-                  <div className="prose max-w-none">
-                    {formatAnswer(results.answer)}
+                  <div className="flex justify-end space-x-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                      onClick={() => setIsEmailDialogOpen(true)}
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>Email</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                      onClick={handleDownloadPDF}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Download PDF</span>
+                    </Button>
                   </div>
 
-                  {/* Sources */}
-                  {results.sources &&
-                    Object.keys(results.sources).length > 0 && (
-                      <SourcesDisplay sources={results.sources} />
-                    )}
+                  <div id="result-content" ref={resultContentRef}>
+                    <div className="prose max-w-none">
+                      {formatAnswer(results.answer)}
+                    </div>
 
-                  {/* Want More Information */}
+                    {/* Sources */}
+                    {results.sources &&
+                      Object.keys(results.sources).length > 0 && (
+                        <SourcesDisplay sources={results.sources} />
+                      )}
+                  </div>
+
+                  {/* Want More Information & Ask Colleague */}
                   <div className="mt-10 border-t border-gray-200 pt-6">
                     <h3 className="text-lg font-medium mb-4 text-center">
                       Want More Information?
                     </h3>
                     <div className="flex justify-center space-x-4">
                       <Button
-                        className="bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
+                        className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
                         onClick={() => setShowChat(true)}
                       >
                         Yes
                       </Button>
                       <Button
                         variant="outline"
-                        className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
+                        className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
                         onClick={() => onWantMoreInfo(false)}
                       >
                         No
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8 flex items-center gap-1"
+                        onClick={() => setIsAskColleagueOpen(true)}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Ask Colleague
                       </Button>
                     </div>
                   </div>
@@ -557,7 +540,28 @@ export default function SearchResults({
               </h1>
 
               <div className="bg-white rounded-lg p-6">
-                <div className="space-y-6">
+                <div className="flex justify-end space-x-2 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                    onClick={() => setIsEmailDialogOpen(true)}
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 text-[#0083BF] border-[#0083BF]"
+                    onClick={handleDownloadPDF}
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download PDF</span>
+                  </Button>
+                </div>
+
+                <div id="chat-content" className="space-y-6">
                   {chatMessages.map((message, index) => (
                     <div
                       key={index}
@@ -598,11 +602,13 @@ export default function SearchResults({
                                 : "bg-white border border-blue-100 text-black rounded-tl-none"
                             )}
                           >
-                            <div className="prose max-w-none break-words">
+                            <div className="prose max-w-none break-words markdown">
                               {message.role === "assistant" ? (
                                 formatAnswer(message.content)
                               ) : (
-                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {message.content}
+                                </ReactMarkdown>
                               )}
                             </div>
                           </div>
@@ -671,7 +677,8 @@ export default function SearchResults({
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          handleChatSubmit(e);
+                          // console.log("triggered", e.key);
+                          //handleChatSubmit(e);
                         }
                       }}
                       placeholder="Ask follow-up questions..."
@@ -696,6 +703,83 @@ export default function SearchResults({
           )}
         </div>
       </div>
+      {/* Email Dialog */}
+      <Dialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Email Results</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email Address</label>
+                <Input
+                  type="email"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  placeholder="example@company.com"
+                  className="mt-1"
+                />
+              </div>
+              <Button
+                onClick={handleSendEmail}
+                disabled={emailStatus === "sending"}
+                className="w-full bg-[#0083BF] hover:bg-[#006a9e]"
+              >
+                {emailStatus === "idle" && "Send Results"}
+                {emailStatus === "sending" && "Sending..."}
+                {emailStatus === "success" && "Sent Successfully!"}
+                {emailStatus === "error" && "Error - Try Again"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Ask Colleague Dialog */}
+      <Dialog open={isAskColleagueOpen} onOpenChange={setIsAskColleagueOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ask a Colleague</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">
+                  Colleague Email Addresses
+                </label>
+                <div className="text-xs text-gray-500 mb-1">
+                  Separate multiple emails with commas
+                </div>
+                <Input
+                  type="text"
+                  value={colleagueEmails}
+                  onChange={(e) => setColleagueEmails(e.target.value)}
+                  placeholder="colleague1@company.com, colleague2@company.com"
+                  className="mt-1"
+                />
+              </div>
+              <div className="text-sm">
+                <p>Your colleagues will receive an email with your question:</p>
+                <Textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  className="mt-2 p-2 rounded w-full"
+                />
+              </div>
+              <Button
+                onClick={handleAskColleague}
+                disabled={askColleagueStatus === "sending"}
+                className="w-full bg-[#0083BF] hover:bg-[#006a9e]"
+              >
+                {askColleagueStatus === "idle" && "Send Request"}
+                {askColleagueStatus === "sending" && "Sending..."}
+                {askColleagueStatus === "success" && "Sent Successfully!"}
+                {askColleagueStatus === "error" && "Error - Try Again"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
