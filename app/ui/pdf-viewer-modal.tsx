@@ -39,21 +39,24 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
 }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(pageNumber);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(1); // Default to 100% zoom
   const [containerWidth, setContainerWidth] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const [pageDetails, setPageDetails] = useState<PageDetails | null>(null);
   const [rotation, setRotation] = useState(0);
-  const [fitToWidth, setFitToWidth] = useState(true);
+  const [fitToWidth, setFitToWidth] = useState(false); // Default to exact size, not fit width
   const containerRef = useRef<HTMLDivElement>(null);
   const scaleWasSetRef = useRef(false);
 
-  // Reset when opening the modal
+  // Reset when opening the modal, but keep scale at 1 (100%)
   useEffect(() => {
     if (isOpen) {
       setCurrentPage(pageNumber);
       setRotation(0);
-      scaleWasSetRef.current = false;
+      // Keep scale at 1 (100%) instead of auto-fitting
+      setScale(1);
+      // Don't set this to false so it doesn't trigger auto-scaling
+      // scaleWasSetRef.current = false;
     }
   }, [isOpen, pageNumber]);
 
@@ -93,38 +96,29 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
     }
   }, [isOpen]);
 
-  // Handle fit to width calculation when needed
+  // This effect is modified to only apply fit-to-width when the button is clicked
   useEffect(() => {
-    if (
-      fitToWidth &&
-      pageDetails &&
-      containerWidth > 0 &&
-      !scaleWasSetRef.current
-    ) {
-      const newScale = containerWidth / pageDetails.width;
+    if (fitToWidth && pageDetails && containerWidth > 0) {
+      const isLandscape = rotation === 90 || rotation === 270;
+      const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
+      const newScale = containerWidth / pageWidth;
       setScale(newScale);
-      scaleWasSetRef.current = true;
     }
-  }, [fitToWidth, pageDetails, containerWidth]);
+  }, [fitToWidth, pageDetails, containerWidth, rotation]);
 
   // Document load success handler
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }): void => {
     setNumPages(numPages);
   };
 
-  // Page load success handler
+  // Page load success handler - no auto-scaling
   const onPageLoadSuccess = (page: { width: number; height: number }): void => {
     setPageDetails({
       width: page.width,
       height: page.height,
     });
 
-    // Only set scale on initial load if we haven't done it yet
-    if (fitToWidth && containerWidth > 0 && !scaleWasSetRef.current) {
-      const newScale = containerWidth / page.width;
-      setScale(newScale);
-      scaleWasSetRef.current = true;
-    }
+    // No auto-scaling on page load
   };
 
   // Custom text renderer for highlighting search terms
@@ -150,43 +144,39 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({
   // Zoom handlers
   const handleZoomIn = (): void => {
     setFitToWidth(false);
-    scaleWasSetRef.current = true;
     setScale((prevScale) => Math.min(prevScale + 0.2, 3));
   };
 
   const handleZoomOut = (): void => {
     setFitToWidth(false);
-    scaleWasSetRef.current = true;
     setScale((prevScale) => Math.max(prevScale - 0.2, 0.5));
   };
 
   // Rotation handler
   const handleRotate = (): void => {
     setRotation((prevRotation) => (prevRotation + 90) % 360);
-    // Reset fit to width when rotating for better user experience
-    if (fitToWidth && pageDetails && containerWidth > 0) {
-      const isLandscape = rotation === 90 || rotation === 270;
-      const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
-      const newScale = containerWidth / pageWidth;
-      setScale(newScale);
-    }
   };
 
   // Fit to width handler
   const handleFitToWidth = (): void => {
     if (!pageDetails) return;
 
-    setFitToWidth(true);
-    scaleWasSetRef.current = false;
+    // Toggle fit to width
+    const newFitToWidth = !fitToWidth;
+    setFitToWidth(newFitToWidth);
 
-    // Calculate based on rotation
-    const isLandscape = rotation === 90 || rotation === 270;
-    const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
+    if (newFitToWidth) {
+      // Calculate scale based on rotation
+      const isLandscape = rotation === 90 || rotation === 270;
+      const pageWidth = isLandscape ? pageDetails.height : pageDetails.width;
 
-    if (containerWidth > 0) {
-      const newScale = containerWidth / pageWidth;
-      setScale(newScale);
-      scaleWasSetRef.current = true;
+      if (containerWidth > 0) {
+        const newScale = containerWidth / pageWidth;
+        setScale(newScale);
+      }
+    } else {
+      // Reset to 100% when turning off fit to width
+      setScale(1);
     }
   };
 

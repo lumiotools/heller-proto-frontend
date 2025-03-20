@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import type React from "react";
@@ -33,6 +34,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { sendColleagueEmail, sendResultsEmail } from "@/lib/sendEmail";
 
 // Update the interface to use proper types
 interface SearchResultsProps {
@@ -158,7 +160,7 @@ const generatePDF = (content: string, filename: string) => {
   if (!contentElement) return;
 
   html2canvas(contentElement, {
-    scale: 2,
+    scale: 1,
     useCORS: true,
     logging: false,
   }).then((canvas) => {
@@ -297,12 +299,17 @@ export default function SearchResults({
   const [askColleagueStatus, setAskColleagueStatus] = useState<
     "idle" | "sending" | "success" | "error"
   >("idle");
+  const [emailMessage, setEmailMessage] = useState("");
 
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultContentRef = useRef<HTMLDivElement>(null);
-
+  useEffect(() => {
+    if (isAskColleagueOpen) {
+      setEmailMessage(query);
+    }
+  }, [isAskColleagueOpen]);
   // Reset chat messages when query changes
   useEffect(() => {
     // Clear chat messages when query changes
@@ -463,43 +470,27 @@ export default function SearchResults({
     setEmailStatus("sending");
 
     try {
-      // Simulate email sending with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await sendResultsEmail(
+        emailInput,
+        query ?? "", // Ensure query is never null
+        results?.answer ?? "", // Default to empty string if null
+        results?.sources ?? {} // Default to empty object if null
+      );
 
-      // Construct email content with the query and results
-      const emailContent = {
-        to: emailInput,
-        subject: `Heller AI Search Results for: ${query}`,
-        body: `
-          <h2>Search Query: ${query}</h2>
-          <div>${results?.answer || "No results available"}</div>
-          <h3>Sources:</h3>
-          <ul>
-            ${
-              results?.sources
-                ? Object.keys(results.sources)
-                    .map((source) => `<li>${source}</li>`)
-                    .join("")
-                : "No sources available"
-            }
-          </ul>
-        `,
-      };
-
-      console.log("Email sent:", emailContent);
+      console.log("✅ Email sent to", emailInput);
       setEmailStatus("success");
 
-      // Reset after success
+      // Reset state after success
       setTimeout(() => {
         setIsEmailDialogOpen(false);
         setEmailInput("");
         setEmailStatus("idle");
       }, 1500);
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error("❌ Error sending email:", error);
       setEmailStatus("error");
 
-      // Reset after error
+      // Reset state after failure
       setTimeout(() => {
         setEmailStatus("idle");
       }, 1500);
@@ -508,7 +499,6 @@ export default function SearchResults({
 
   // Handle asking a colleague
   const handleAskColleague = async () => {
-    // Check if emails are valid (split by commas and validate each)
     const emails = colleagueEmails.split(",").map((e) => e.trim());
     const allValid = emails.every((email) => isValidEmail(email));
 
@@ -520,37 +510,20 @@ export default function SearchResults({
     setAskColleagueStatus("sending");
 
     try {
-      // Simulate email sending with timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Construct email content for colleagues
-      const emailContent = {
-        to: emails,
-        subject: `Your teammate needs help with: ${query}`,
-        body: `
-          Hey there,
-          
-          Your teammate has asked you: "${query}"
-          
-          Please respond to this email to answer and it will get added to the Heller database. 
-          You can also attach documents.
-          
-          Best regards,
-          Heller AI Assistant
-        `,
-      };
-
-      console.log("Colleague request sent:", emailContent);
+      // Use emailMessage instead of query
+      await sendColleagueEmail(colleagueEmails, emailMessage, isValidEmail);
+      console.log("✅ Colleague request sent:", colleagueEmails);
       setAskColleagueStatus("success");
 
       // Reset after success
       setTimeout(() => {
         setIsAskColleagueOpen(false);
         setColleagueEmails("");
+        setEmailMessage(""); // Reset the email message
         setAskColleagueStatus("idle");
       }, 1500);
     } catch (error) {
-      console.error("Error sending colleague request:", error);
+      console.error("❌ Error sending colleague request:", error);
       setAskColleagueStatus("error");
 
       // Reset after error
@@ -902,7 +875,8 @@ export default function SearchResults({
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
-                          handleChatSubmit(e);
+                          // console.log("triggered", e.key);
+                          //handleChatSubmit(e);
                         }
                       }}
                       placeholder="Ask follow-up questions..."
@@ -985,8 +959,8 @@ export default function SearchResults({
               <div className="text-sm">
                 <p>Your colleagues will receive an email with your question:</p>
                 <Textarea
-                  value={query}
-                  onChange={(e) => onSearch(e.target.value)} // Update the query state
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
                   className="mt-2 p-2 rounded w-full"
                 />
               </div>
