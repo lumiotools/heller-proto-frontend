@@ -3,13 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  ChevronLeft,
-  Download,
-  Mail,
-  UserPlus,
-} from "lucide-react";
+import { Send, ChevronLeft, Download, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -44,7 +38,6 @@ interface SearchResultsProps {
   onSearch: (query: string) => void;
   onUpdateChatHistory?: (query: string, messages: ChatHistoryMessage[]) => void;
 }
-
 
 // Improved formatAnswer function with proper markdown styling
 const formatAnswer = (answer: string) => {
@@ -508,14 +501,14 @@ export default function SearchResults({
                     </h3>
                     <div className="flex justify-center space-x-4">
                       <Button
-                        className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
+                        className=" bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
                         onClick={() => setShowChat(true)}
                       >
                         Yes
                       </Button>
                       <Button
                         variant="outline"
-                        className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
+                        className=" border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
                         onClick={() => onWantMoreInfo(false)}
                       >
                         No
