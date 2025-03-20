@@ -572,45 +572,47 @@ export default function SearchResults({
     <div className="flex h-[calc(100vh-80px)] bg-white mt-8 ml-5">
       {/* History Sidebar - Fixed height with overflow-y-auto */}
       {/* History Sidebar - Fixed to make history properly scrollable */}
-      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-140px)] border-r">
+      {/* History Sidebar - Properly fixed for scrolling */}
+      <div className="w-64 hidden md:flex flex-col h-[calc(100vh-140px)] ">
         {/* Fixed header */}
-        <div className="p-4 pb-2 bg-white">
+        <div className="p-4 pb-2 bg-white ">
           <h2 className="text-lg font-semibold">History</h2>
         </div>
 
-        {/* Scrollable middle section - this is the key part */}
-        <div
-          className="flex-1 overflow-y-auto px-4"
-          style={{ height: "calc(100% - 110px)" }}
-        >
+        {/* Scrollable history section */}
+        <div className="flex-1 overflow-y-auto">
           {searchHistory.length > 0 ? (
-            searchHistory.map((item, index) => {
-              // Check if this history item has chat history
-              const savedData = getSearchResults(item);
-              const hasChatHistory =
-                savedData?.chatHistory && savedData.chatHistory.length > 0;
+            <div className="px-4 py-2">
+              {searchHistory.map((item, index) => {
+                // Check if this history item has chat history
+                const savedData = getSearchResults(item);
+                const hasChatHistory =
+                  savedData?.chatHistory && savedData.chatHistory.length > 0;
 
-              return (
-                <div
-                  key={index}
-                  className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm mb-2 ${
-                    item === query ? "bg-gray-100 font-medium" : ""
-                  }`}
-                  onClick={() => onSearch(item)}
-                >
-                  {item}
-                </div>
-              );
-            })
+                return (
+                  <div
+                    key={index}
+                    className={`p-2 hover:bg-gray-100 rounded cursor-pointer text-sm mb-2 ${
+                      item === query ? "bg-gray-100 font-medium" : ""
+                    }`}
+                    onClick={() => onSearch(item)}
+                  >
+                    {item}
+                  </div>
+                );
+              })}
+            </div>
           ) : (
-            <div className="text-sm text-gray-500 italic p-2">
-              No search history yet
+            <div className="px-4 py-2">
+              <div className="text-sm text-gray-500 italic p-2">
+                No search history yet
+              </div>
             </div>
           )}
         </div>
 
         {/* Fixed footer */}
-        <div className="p-4 pt-2 bg-white border-t">
+        <div className="p-4 bg-white mt-auto">
           <div
             className="flex items-center text-[#0083BF] cursor-pointer"
             onClick={onBackToLanding}
@@ -619,7 +621,7 @@ export default function SearchResults({
             <span className="text-base font-medium">Make New Search</span>
           </div>
         </div>
-      </div>{" "}
+      </div>
       {/* Main Content */}
       <div className="flex-1 overflow-auto flex flex-col mb-16">
         {/* Back button and breadcrumb */}
