@@ -3,13 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
-import {
-  Send,
-  ChevronLeft,
-  Download,
-  Mail,
-  UserPlus,
-} from "lucide-react";
+import { Send, ChevronLeft, Download, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -44,7 +38,6 @@ interface SearchResultsProps {
   onSearch: (query: string) => void;
   onUpdateChatHistory?: (query: string, messages: ChatHistoryMessage[]) => void;
 }
-
 
 // Improved formatAnswer function with proper markdown styling
 const formatAnswer = (answer: string) => {
@@ -388,7 +381,7 @@ export default function SearchResults({
           ) : (
             <div className="px-4 py-2">
               <div className="text-sm text-gray-500 italic p-2">
-                No search history yet
+                No message history yet
               </div>
             </div>
           )}
@@ -401,7 +394,7 @@ export default function SearchResults({
             onClick={onBackToLanding}
           >
             <span className="text-lg mr-1">+</span>
-            <span className="text-base font-medium">Make New Search</span>
+            <span className="text-base font-medium">Ask new question</span>
           </div>
         </div>
       </div>
