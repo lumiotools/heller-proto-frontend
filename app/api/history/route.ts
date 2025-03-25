@@ -24,7 +24,10 @@ export const POST = async (request: NextRequest) => {
     if (!chatHistory) {
       chatHistory = await ChatHistory.create({ userIP, messages });
     } else {
-      await ChatHistory.findByIdAndUpdate(id, { userIP, messages });
+      await ChatHistory.findByIdAndUpdate(id, {
+        userIP,
+        messages: [...chatHistory.messages, ...messages]
+      });
     }
 
     return NextResponse.json({

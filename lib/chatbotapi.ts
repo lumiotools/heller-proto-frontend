@@ -12,7 +12,7 @@ export interface ApiResponse {
 export interface ChatHistoryMessage {
   role: "user" | "assistant"; // Make this more specific
   content: string;
-  sources?: Record<string, { page: number; relevance: number }[]>;
+  sources?: Record<string, { page: number; relevance: number, text: string }[]>;
 }
 
 // Define a structure for storing both search results and chat history
@@ -23,8 +23,19 @@ export interface StoredSearchData {
   timestamp: number;
 }
 
+interface TrackingChatHistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+  sources?: {
+    fileName: string;
+    page: number;
+    snippet: string;
+  }[]
+}
+
 // Keep track of the current conversation
 let currentConversationId: string | null = null;
+let chatId: string | null = null;
 
 export async function queryHellerApi(
   question: string,
@@ -141,11 +152,12 @@ export async function queryHellerApi(
 // Function to start a new conversation
 export function startNewConversation(): void {
   currentConversationId = null;
+  chatId = null;
   console.log("Started a new conversation");
 }
 
 // Save search results to localStorage
-export function saveSearchResults(query: string, results: ApiResponse): void {
+export async function saveSearchResults(query: string, results: ApiResponse): Promise<void> {
   try {
     // Get existing search data
     const existingDataStr = localStorage.getItem("hellerSearchData");
@@ -166,9 +178,45 @@ export function saveSearchResults(query: string, results: ApiResponse): void {
 
     // Save back to localStorage
     localStorage.setItem("hellerSearchData", JSON.stringify(searchData));
+    const updatedMessages: TrackingChatHistoryMessage[] = []
+
+    updatedMessages.push({
+      role:"user",
+      content: query
+    })
+
+    updatedMessages.push({
+      role: "assistant",
+      content: results.answer,
+      sources: Object.entries(results.sources).map(([fileName, entries]) => {
+        return entries.map(entry => ({
+          fileName,
+          page: entry.page,
+          snippet: entry.text // Add actual snippet generation logic here if necessary
+        }));
+      }
+      ).flat()
+    })
+    const updatedChatId = await updateChatHistoryTracking(chatId, updatedMessages) 
+    chatId = updatedChatId;
     console.log(`Saved search results for query: ${query}`);
   } catch (error) {
     console.error("Error saving search results:", error);
+  }
+}
+
+const updateChatHistoryTracking = async (chatId: string | null, updatedMessages: TrackingChatHistoryMessage[]) => {
+  const res = await fetch("/api/history", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: chatId, messages: updatedMessages }),
+  });
+
+  const data = await res.json();
+  if (data.success && data.data?.id) {
+    return data.data.id;
+  } else {
+    return null;
   }
 }
 
