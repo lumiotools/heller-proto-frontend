@@ -12,7 +12,7 @@ export interface ApiResponse {
 export interface ChatHistoryMessage {
   role: "user" | "assistant"; // Make this more specific
   content: string;
-  sources?: Record<string, { page: number; relevance: number, text: string }[]>;
+  sources?: Record<string, { page: number; relevance: number }[]>;
 }
 
 // Define a structure for storing both search results and chat history
