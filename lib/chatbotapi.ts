@@ -60,7 +60,7 @@ export async function queryHellerApi(
   // Prepare the request body including conversation_id if available
   const requestBody = {
     question,
-    top_k: 5,
+    top_k: 10,
     ...(currentConversationId && { conversation_id: currentConversationId }),
   };
 
