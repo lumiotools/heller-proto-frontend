@@ -646,8 +646,8 @@ export default function ChatInterface({
                         "What is the purpose of the wire mesh trap in the flux reactor?",
                         "How to loosen the reactor flange?",
                         "What all materials do you need for a reactor upgrade?",
-                        "What steps should be followed to safely remove the reactor flange during maintenance?",
-                        "What are the key specifications of the JZ-ZM59 zeolite molecular sieve?",
+                        "Describe the differences between fresh and aged Zeolite under the electron microscope",
+                        "What does an Aged Cu-LPA Wire Mesh Catalyst Traps look like?",
                         "What is the purpose of the Getter Screen in the reactor system?"
                       ].map((question) => (
                         <button

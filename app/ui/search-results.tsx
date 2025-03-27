@@ -19,6 +19,7 @@ import remarkGfm from "remark-gfm";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -98,6 +99,8 @@ export default function SearchResults({
     "idle" | "sending" | "success" | "error"
   >("idle");
   const [isAskColleagueOpen, setIsAskColleagueOpen] = useState(false);
+  const [isProvideInformationOpen, setIsProvideInformationOpen] =
+    useState(false);
   const [colleagueEmails, setColleagueEmails] = useState("");
   const [askColleagueStatus, setAskColleagueStatus] = useState<
     "idle" | "sending" | "success" | "error"
@@ -342,6 +345,10 @@ export default function SearchResults({
     }
   };
 
+  const handleProvideInformation = async () => {
+    alert("This functionality is currently locked")
+  }
+
   // Download results as PDF
   const handleDownloadPDF = () => {
     generatePDF(
@@ -502,31 +509,50 @@ export default function SearchResults({
 
                   {/* Want More Information & Ask Colleague */}
                   <div className="mt-10 border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-medium mb-4 text-center">
-                      Want More Information?
-                    </h3>
-                    <div className="flex justify-center space-x-4">
-                      <Button
-                        className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
-                        onClick={() => setShowChat(true)}
-                      >
-                        Yes
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
-                        onClick={() => onWantMoreInfo(false)}
-                      >
-                        No
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8 flex items-center gap-1"
-                        onClick={() => setIsAskColleagueOpen(true)}
-                      >
-                        <UserPlus className="h-4 w-4" />
-                        Ask Colleague
-                      </Button>
+                    <div className="flex justify-center items-center gap-8">
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-center">
+                          Want More Information?
+                        </h3>
+                        <div className="flex justify-center space-x-4">
+                          <Button
+                            className="hidden bg-[#0083BF] hover:bg-[#006a9e] text-white px-8"
+                            onClick={() => setShowChat(true)}
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="hidden border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8"
+                            onClick={() => onWantMoreInfo(false)}
+                          >
+                            No
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8 flex items-center gap-1"
+                            onClick={() => setIsAskColleagueOpen(true)}
+                          >
+                            <UserPlus className="h-4 w-4" />
+                            Ask Colleague
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium mb-4 text-center">
+                          Want to Add/Correct Something?
+                        </h3>
+                        <div className="flex justify-center space-x-4">
+                          <Button
+                            variant="outline"
+                            className="border-[#0083BF] text-[#0083BF] hover:bg-[#e6f7ff] px-8 flex items-center gap-1"
+                            onClick={() => setIsProvideInformationOpen(true)}
+                          >
+                            <UserPlus className="h-4 w-4" />
+                            Provide Information
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -781,6 +807,39 @@ export default function SearchResults({
                 {askColleagueStatus === "sending" && "Sending..."}
                 {askColleagueStatus === "success" && "Sent Successfully!"}
                 {askColleagueStatus === "error" && "Error - Try Again"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Provide Information Dialog */}
+      <Dialog
+        open={isProvideInformationOpen}
+        onOpenChange={setIsProvideInformationOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Provide Information</DialogTitle>
+            <DialogDescription>
+              Provide any additional information or corrections to improve
+              future responses of the AI assistant
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="space-y-4">
+              <div className="text-sm">
+                <p>Enter the information</p>
+                <Textarea
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  className="mt-2 p-2 rounded w-full"
+                />
+              </div>
+              <Button
+                onClick={handleProvideInformation}
+                className="w-full bg-[#0083BF] hover:bg-[#006a9e]"
+              >
+                Submit
               </Button>
             </div>
           </div>
