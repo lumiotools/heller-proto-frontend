@@ -84,6 +84,11 @@ const linksArray = [
       "RFC-355  Reactor Catalyst Upgrade And Return Gas Into Flux Box.pdf",
     link: "https://drive.google.com/file/d/1PxlqRdSr4fqqlTKkxiIaophIfkIRDSld/view?usp=sharing",
   },
+  {
+    filename:
+      "RFC-398 Reactor Catalyst Remove Tooling (17).pdf",
+    link: "https://drive.google.com/file/d/1OxsvEUasqYWHiQPqPGe59hfATr2uXC7O/view?usp=sharing",
+  },
 ];
 
 interface Message {
@@ -634,12 +639,16 @@ export default function ChatInterface({
                     <h2 className="text-base text-[#545454] font-medium mt-16">
                       Discover & Get Instant Answers to Key Questions
                     </h2>
-                    <div className="flex flex-wrap gap-4 mt-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
                       {[
                         "How can I improve efficiency in reflow soldering?",
                         "What are the steps for Reactor Catalyst Removal Retrofit?",
                         "What is the purpose of the wire mesh trap in the flux reactor?",
                         "How to loosen the reactor flange?",
+                        "What all materials do you need for a reactor upgrade?",
+                        "What steps should be followed to safely remove the reactor flange during maintenance?",
+                        "What are the key specifications of the JZ-ZM59 zeolite molecular sieve?",
+                        "What is the purpose of the Getter Screen in the reactor system?"
                       ].map((question) => (
                         <button
                           key={question}
