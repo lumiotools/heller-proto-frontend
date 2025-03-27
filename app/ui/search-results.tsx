@@ -314,7 +314,13 @@ export default function SearchResults({
 
     try {
       // Use emailMessage instead of query
-      await sendColleagueEmail(colleagueEmails, emailMessage, isValidEmail);
+      await sendColleagueEmail(
+        colleagueEmails,
+        emailMessage,
+        results?.answer ?? "", // Default to empty string if null
+        results?.sources ?? {}, // Default to empty object if null,
+        isValidEmail
+      );
       console.log("✅ Colleague request sent:", colleagueEmails);
       setAskColleagueStatus("success");
 

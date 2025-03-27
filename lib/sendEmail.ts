@@ -37,7 +37,7 @@ export async function sendResultsEmail(
         .map((entry) => {
           const page = entry.page ?? 0;
           const relevance = entry.relevance ?? 0;
-          const text = entry.text ?? "";
+          const text = entry.text ? (entry.text.length > 100 ? entry.text.slice(0, 100) + '...' : entry.text) : "";
           return `<li>📄 Page ${page} (Relevance: ${relevance}%) - ${text}</li>`;
         })
         .join("");
@@ -73,6 +73,8 @@ export async function sendResultsEmail(
 export async function sendColleagueEmail(
   colleagueEmails: string,
   query: string | null | undefined,
+  content: string | null | undefined,
+  sources: Sources | null | undefined,
   isValidEmail: (email: string) => boolean
 ) {
   // Validate and clean email list
@@ -87,12 +89,39 @@ export async function sendColleagueEmail(
   }
 
   const safeQuery = query ?? "a question";
+  const safeContent = content ?? "";
+  const safeSources = sources ?? {};
+
+  // Convert Markdown content to HTML
+  const htmlContent = marked(safeContent);
+
+  // Format sources as an HTML section
+  const sourcesHtml = Object.entries(safeSources)
+    .map(([source, entries]) => {
+      const sourceEntries = entries
+        .map((entry) => {
+          const page = entry.page ?? 0;
+          const relevance = entry.relevance ?? 0;
+            const text = entry.text ? (entry.text.length > 100 ? entry.text.slice(0, 100) + '...' : entry.text) : "";
+          return `<li>📄 Page ${page} (Relevance: ${relevance}%) - ${text}</li>`;
+        })
+        .join("");
+      return `<h3>🔗 Source: ${source}</h3><ul>${sourceEntries}</ul>`;
+    })
+    .join("<hr>");
 
   // Construct email content
   const emailHtml = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
-        <h2>🚀 Your teammate needs help!</h2>
+        <h2>Your teammate needs help!</h2>
         <p><strong>Query:</strong> "${safeQuery}"</p>
+        <p><strong>AI Provided Response:</strong></p>
+        <div style="padding: 10px; background-color: #f9f9f9; border-left: 4px solid #007bff;">
+          ${htmlContent}
+        </div>
+        <hr>
+        <h3>📚 Sources:</h3>
+        ${sourcesHtml || "<p>No sources available.</p>"}
         <p>Please respond to this email with your answer, and it will be added to the Heller database.</p>
         <p>You can also attach documents if needed.</p>
         <p>Best regards,</p>
